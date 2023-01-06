@@ -21,6 +21,24 @@ void Hotspot_broadcast() {
   // provided IP to all DNS request
   dnsServer.start(DNS_PORT, "*", apIP);
 
+  webServer.on("/login", []() {
+    String uname = webServer.arg("uname");
+    String pword = webServer.arg("pword");
+
+    if(uname == "admin" && pword == "bytescrafter2023!") {
+      webServer.sendHeader("Location", String("/menu"), true);
+      Display_Show(" Syntry Mini v1", "WELCOME! ADMIN");
+       Buzzer_Play(1, 1000, 50);
+    } else {
+      webServer.sendHeader("Location", String("/"), true);
+      Display_Show(" Syntry Mini v1", "STOP! REPORTING");
+      Buzzer_Play(1, 250, 50);
+      delay(1500);
+      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    }
+    webServer.send ( 302, "text/plain", "");
+  });
+
   webServer.on("/menu", []() {
     webServer.send(200, "text/html", Helper_Hotspot_To_Menu());
   });
@@ -28,24 +46,28 @@ void Hotspot_broadcast() {
   webServer.on("/access", []() {
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     rfidMode = "access";
+    Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Access());
   });
 
   webServer.on("/add", []() {
     Display_Show(" Syntry Mini v1", ">TAP TO REGISTER");
     rfidMode = "add";
+    Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Add());
   });
 
   webServer.on("/remove", []() {
     Display_Show(" Syntry Mini v1", ">TAP TO REMOVE");
     rfidMode = "remove";
+    Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Remove());
   });
 
   webServer.on("/verify", []() {
     Display_Show(" Syntry Mini v1", ">TAP TO VERIFY");
     rfidMode = "verify";
+    Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Verify());
   });
 

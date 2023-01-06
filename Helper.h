@@ -43,10 +43,10 @@ String Helper_Hotspot_Login() {
   ptr +="<h1>Syntry Mini v1</h1>\n";
   ptr +="<h5>Powered by BytesCarfter</h5>\n";
   
-  ptr +="<form action='/menu' method='get'>\n";
+  ptr +="<form action='/login' method='get'>\n";
     ptr +="<div><input type='text' name='uname' placeholder='Username'></div>\n";
     ptr +="<div><input type='password' name='pword' placeholder='Password'></div>\n";
-    ptr +="<input type='submit' value='CONNECT TO WIFI'>\n";
+    ptr +="<input type='submit' value='AUTHENTICATE'>\n";
   ptr +="</form>\n\n";
 
   ptr +="</body>\n";

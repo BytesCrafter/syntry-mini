@@ -86,9 +86,11 @@ bool add(String uid) {
     myFile.println("Start of Logs.");
     myFile.close();
     Display_Show(" Syntry Mini v1", " LOG: SAVED!");
+    Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
     Display_Show(" Syntry Mini v1", " LOG: FAILED!");
+    Buzzer_Play(1, 300, 50); delay(1000);
     return false;
   }
 }
@@ -99,9 +101,11 @@ bool remove(String uid) {
 
   if (!SD.exists(filepath)) {
     Display_Show(" Syntry Mini v1", " LOG: DELETED!");
+    Buzzer_Play(1, 900, 50); delay(1000);
     return false;
   } else {
     Display_Show(" Syntry Mini v1", " LOG: FAILED!");
+    Buzzer_Play(1, 300, 50); delay(1000);
     return true;
   }
 }
@@ -113,9 +117,11 @@ bool verify(String uid) {
   if (myFile) {
     myFile.close();
     Display_Show(" Syntry Mini v1", " LOG: EXISTING!");
+    Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
     Display_Show(" Syntry Mini v1", " LOG: NOT FOUND!");
+    Buzzer_Play(1, 300, 50); delay(1000);
     return false;
   }
 }

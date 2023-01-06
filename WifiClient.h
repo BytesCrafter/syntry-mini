@@ -1,4 +1,4 @@
-//STATUS: Working!
+#include <WiFiClient.h>
 
 /*
 * Connect your controller to WiFi

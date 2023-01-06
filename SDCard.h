@@ -37,10 +37,22 @@ String SDCard_Load(String filename) {
     }
 
     readFile.close(); // close the file:
+    Serial.println("Reading Success!");
   } else {
     // if the file didn't open, print an error:
-    Serial.println("error opening test.txt");
+    Serial.println("Reading Failed!");
   }
 
   return data;
+}
+
+bool SDCard_Delete(String filename) {
+
+  SD.remove(filename);
+
+  if (SD.exists(filename)) {
+    return false;
+  }
+
+  return true;
 }

@@ -9,7 +9,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 #define LIGHT_RED 9 
 #define LIGHT_GREEN 8 
 
-#define WAIT_OPEN 5000 
+#define WAIT_OPEN 7000 
 
 #define SDCARD_PIN 0
 

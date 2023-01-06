@@ -12,7 +12,7 @@ void Relay_Off(int PORT = CONFIG_RELAY) {
   digitalWrite(PORT, LOW);
 }
 
-void Relay_Open(int wait = 7000) {
+void Relay_Open(int wait = WAIT_OPEN) {
   digitalWrite(CONFIG_RELAY, HIGH);
   delay(wait);
   digitalWrite(CONFIG_RELAY, LOW);

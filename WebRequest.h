@@ -1,6 +1,7 @@
 //STATUS: PENDING
 //NOTE: Http need yto be https
 #include <WiFiClientSecure.h>
+#include <ESP8266HTTPClient.h>
 
 void WebRequest_get() {
   WiFiClient client;

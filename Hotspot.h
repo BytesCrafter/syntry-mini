@@ -1,51 +1,62 @@
-//STATUS: Working!
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
 
-/* Local Server */
-const char *svrAp = "Syntry-AP";
-const char *svrPw = "bytescrafter";
+const byte DNS_PORT = 53;
+IPAddress apIP(172, 217, 28, 1);
+DNSServer dnsServer;
+ESP8266WebServer webServer(80);
 
-/* Put IP Address details */
-IPAddress local_ip(10,10,10,1);
-IPAddress gateway(10,10,10,1);
-IPAddress subnet(255,255,255,0);
+String rfidMode = "access"; //access, add, remove
 
-// Create WebServer object on port 80
-//ESP8266WebServer web(80);
-ESP8266WebServer webs(80);
-
-void Hotspot_broadcast() {
-
-  Serial.println();
-  Serial.println("Starting Hotspot.");
-
-  //WiFi.disconnect(false);
-
-  WiFi.softAP(svrAp, svrPw);
-  IPAddress IP = WiFi.softAPIP();
-  //WiFi.softAPConfig(local_ip, gateway, subnet);
-  delay(100);
-
-  Serial.println();
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  //web.on("/", handle_OnConnect);
-  //web.on("/test", handle_led1on);
-  //web.onNotFound(handle_NotFound);
-
-  // Start server
-  //web.begin();
+String Rfid_Status() {
+  return rfidMode;
 }
 
-// void handle_OnConnect() {
-//   Serial.println("Client request hotspot.");
-//   web.send(200, "text/html", Helper_TestHtml(1,1)); 
-// }
+void Hotspot_broadcast() {
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP("Syntry Mini v1");
 
-// void handle_NotFound(){
-//   //web.send(404, "text/plain", "Not found");
-// }
+  // if DNSServer is started with "*" for domain name, it will reply with
+  // provided IP to all DNS request
+  dnsServer.start(DNS_PORT, "*", apIP);
+
+  webServer.on("/menu", []() {
+    webServer.send(200, "text/html", Helper_Hotspot_To_Menu());
+  });
+
+  webServer.on("/access", []() {
+    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    rfidMode = "access";
+    webServer.send(200, "text/html", Helper_Hotspot_To_Access());
+  });
+
+  webServer.on("/add", []() {
+    Display_Show(" Syntry Mini v1", ">TAP TO REGISTER");
+    rfidMode = "add";
+    webServer.send(200, "text/html", Helper_Hotspot_To_Add());
+  });
+
+  webServer.on("/remove", []() {
+    Display_Show(" Syntry Mini v1", ">TAP TO REMOVE");
+    rfidMode = "remove";
+    webServer.send(200, "text/html", Helper_Hotspot_To_Remove());
+  });
+
+  webServer.on("/verify", []() {
+    Display_Show(" Syntry Mini v1", ">TAP TO VERIFY");
+    rfidMode = "verify";
+    webServer.send(200, "text/html", Helper_Hotspot_To_Verify());
+  });
+
+  // replay to all requests with same HTML
+  webServer.onNotFound([]() {
+    webServer.send(200, "text/html", Helper_Hotspot_Login());
+  });
+  webServer.begin();
+}
 
 void Hotspot_loop() {
-  webs.handleClient();
+  dnsServer.processNextRequest();
+  webServer.handleClient();
 }

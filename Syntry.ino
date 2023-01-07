@@ -52,6 +52,14 @@ GND     = GND
 File myFile;
 
 bool access(String uid) {
+  if(uid == RST_KEYTAG) {
+    SD.remove("users/admin");
+    Display_Show(" Syntry Mini v1", "RESET ADMIN PASS");
+    Buzzer_Play(1, 1000, 100); delay(2000);
+    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    return true;
+  }
+
   Display_Show(" Syntry Mini v1", " AUTHENTICATING");
   Buzzer_Play(1, 700, 50);
   Serial.println("UID: " + uid);
@@ -180,35 +188,23 @@ void setup() {
   Rfid_Init();
   SDCard_Init();
 
-  // myFile = SD.open("/");
-  // printDirectory(myFile, 0);
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  // myFile = SD.open("test.txt", FILE_WRITE);
-  // // if the file opened okay, write to it:
-  // if (myFile) {
-  //   Serial.print("Writing to test.txt...");
-  //   myFile.println("testing 1, 2, 3.");
-  //   // close the file:
-  //   myFile.close();
-  //   Serial.println("done.");
-  // } else {
-  //   // if the file didn't open, print an error:
-  //   Serial.println("error opening test.txt");
-  // }
-  // myFile = SD.open("/");
-  // printDirectory(myFile, 0);
-
   Hotspot_broadcast();
 
   Display_Init();
   Display_Show(" Syntry Mini v1", "by BytesCrafter");
-  Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-
-  Buzzer_Play(3, 1200, 50);
+  Buzzer_Play(3, 1200, 1000);
 }
 
 void loop() {
+  if(millis() - initTime <= timeSpan) {
+    return;
+  }
+
+  if(!isInit) {
+    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    isInit = true;
+  }
+
   Hotspot_loop();
   Rfid_Listen(&catch_Rfid);
 }

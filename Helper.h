@@ -89,6 +89,10 @@ String Helper_Hotspot_To_Menu() {
     ptr +="<input type='submit' value='Remove Mode'>\n";
   ptr +="</form>\n\n";
 
+  ptr +="<form action='/change-password' method='get'>\n";
+    ptr +="<input type='submit' value='Change Password'>\n";
+  ptr +="</form>\n\n";
+
   ptr +="</body>\n";
   ptr +="</html>\n";
   return ptr;
@@ -114,7 +118,6 @@ String Helper_Hotspot_To_Access() {
   ptr +="<h5>Powered by BytesCarfter</h5>\n";
   
   ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<div><input type='text' name='uname' placeholder='Access Mode'></div>\n";
     ptr +="<input type='submit' value='Back to Menu'>\n";
   ptr +="</form>\n\n";
 
@@ -143,7 +146,6 @@ String Helper_Hotspot_To_Add() {
   ptr +="<h5>Powered by BytesCarfter</h5>\n";
   
   ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<div><input type='text' name='uname' placeholder='Add Mode'></div>\n";
     ptr +="<input type='submit' value='Back to Menu'>\n";
   ptr +="</form>\n\n";
 
@@ -172,7 +174,6 @@ String Helper_Hotspot_To_Remove() {
   ptr +="<h5>Powered by BytesCarfter</h5>\n";
   
   ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<div><input type='text' name='uname' placeholder='Remove Mode'></div>\n";
     ptr +="<input type='submit' value='Back to Menu'>\n";
   ptr +="</form>\n\n";
 
@@ -201,7 +202,44 @@ String Helper_Hotspot_To_Verify() {
   ptr +="<h5>Powered by BytesCarfter</h5>\n";
   
   ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<div><input type='text' name='uname' placeholder='Verify Mode'></div>\n";
+    ptr +="<input type='submit' value='Back to Menu'>\n";
+  ptr +="</form>\n\n";
+
+  ptr +="</body>\n";
+  ptr +="</html>\n";
+  return ptr;
+}
+
+String Helper_Hotspot_ChangePassword(String message = "") {
+  String ptr = "<!DOCTYPE html> <html>\n";
+  ptr +="<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
+  ptr +="<title>LED Control</title>\n";
+  ptr +="<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
+  ptr +="body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 50px;}\n";
+  ptr +=".button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 4px;}\n";
+  ptr +=".button-on {background-color: #3498db;}\n";
+  ptr +=".button-on:active {background-color: #3498db;}\n";
+  ptr +=".button-off {background-color: #34495e;}\n";
+  ptr +=".button-off:active {background-color: #2c3e50;}\n";
+  ptr +="p {font-size: 14px;color: #888;margin-bottom: 10px;}\n";
+  ptr +="input{ margin-bottom: 30px; padding: 10px;} form{ margin-top: 50px; }\n";
+  ptr +="</style>\n";
+  ptr +="</head>\n";
+  ptr +="<body>\n";
+  ptr +="<h1>Syntry Mini v1</h1>\n";
+  ptr +="<h5>Powered by BytesCarfter</h5>\n";
+
+  if(message != "") {
+    ptr +="<h6>"+message+"</h6>\n";
+  }
+  
+  ptr +="<form action='/update-password' method='get'>\n";
+    ptr +="<div><input type='password' name='newpass' placeholder='New Password'></div>\n";
+    ptr +="<div><input type='password' name='confirmpass' placeholder='Confirm Password'></div>\n";
+    ptr +="<input type='submit' value='UPDATE PASSWORD'>\n";
+  ptr +="</form>\n\n";
+
+  ptr +="<form action='/menu' method='get'>\n";
     ptr +="<input type='submit' value='Back to Menu'>\n";
   ptr +="</form>\n\n";
 

@@ -2,7 +2,7 @@
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define APP_VERSION "1.0.0" 
-#define RST_KEYTAG "1502774F" 
+#define RST_KEYTAG "80BA9126" 
 
 #define BAUD_RATE 115200 
 
@@ -17,7 +17,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 #define SDCARD_PIN 0
 
 unsigned long initTime;
-unsigned long timeSpan = 2000;
+unsigned long timeSpan = 3000;
 bool isInit = false;
 
 void Config_Init() {

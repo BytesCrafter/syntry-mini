@@ -39,15 +39,22 @@ GND     = GND
 #include "Buzzer.h"
 
 #include <ESP8266WiFi.h>
-// #include <WiFiClient.h>
+//#include <WiFiClient.h>
+
+//NTP CLIENT
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+const long utcOffsetInSeconds = 28800; // +8hrs
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 //ADVANCE
+#include "WifiClient.h"
 #include "Hotspot.h"
 
 // #include "Settings.h"
 // #include "WebRequest.h"
 // #include "WebServer.h"
-// #include "WifiClient.h"
 
 File myFile;
 
@@ -81,6 +88,11 @@ bool access(String uid) {
   Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
   Buzzer_Play(1, 900, 50);
   Relay_Open();
+
+  String timing = String(timeClient.getHours())+":"+String(timeClient.getMinutes())+":"+String(timeClient.getSeconds());
+  Serial.println(timing);
+  Display_Show(timing, " TAP YOUR CARD");
+  delay(3000);
 
   Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
   return true;
@@ -188,14 +200,38 @@ void setup() {
   Rfid_Init();
   SDCard_Init();
 
+  WiFi.mode(WIFI_AP_STA); 
   Hotspot_broadcast();
+
+  //Check first the wifi.
+  String wifiname;
+  String wnpath = "settings/wifiname";
+  File wnfile = SD.open(wnpath);
+  if (wnfile) {
+    wifiname = wnfile.readString();
+  }
+
+  String wifipass;
+  String wppath = "settings/wifipass";
+  File wpfile = SD.open(wppath);
+  if (wpfile) {
+    wifipass = wpfile.readString();
+  }
+
+  if(wifiname != "" && wifipass != "") {
+    WifiClient_connect("GuestNetwork", "ahm2022!");
+    timeClient.begin();
+  }
+  delay(1000);
 
   Display_Init();
   Display_Show(" Syntry Mini v1", "by BytesCrafter");
-  Buzzer_Play(3, 1200, 1000);
+  Buzzer_Play(3, 1200, 500);
 }
 
 void loop() {
+  timeClient.update();
+
   if(millis() - initTime <= timeSpan) {
     return;
   }

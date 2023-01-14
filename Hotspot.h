@@ -64,6 +64,10 @@ void Hotspot_broadcast() {
   });
 
   webServer.on("/menu", []() {
+    String action = webServer.arg("action");
+    if(action == "restart") {
+      ESP.reset();
+    }
     webServer.send(200, "text/html", Helper_Hotspot_To_Menu());
   });
 
@@ -98,10 +102,69 @@ void Hotspot_broadcast() {
     webServer.send ( 302, "text/plain", "");
   });
 
+  webServer.on("/wifi-connect", []() {
+    String status = webServer.arg("status");
+    webServer.send(200, "text/html", Helper_Hotspot_ConnectWifi(status));
+  });
+
+  webServer.on("/save-wifi", []() {
+    String wifiname = webServer.arg("wifiname");
+    String wifipass = webServer.arg("wifipass");
+
+    if(wifiname != "" && wifipass != "") {
+      String filepath;
+      File wifiCon;      
+
+      filepath = "settings/wifiname";
+      SD.remove(filepath); //,ake sure delete if existing.
+      wifiCon = SD.open(filepath, FILE_WRITE);
+      if (wifiCon) {
+        wifiCon.print(wifiname);
+        wifiCon.close();
+      }
+
+      filepath = "settings/wifipass";
+      SD.remove(filepath); //,ake sure delete if existing.
+      wifiCon = SD.open(filepath, FILE_WRITE);
+      if (wifiCon) {
+        wifiCon.print(wifipass);
+        wifiCon.close();
+      }
+
+      Display_Show(" Syntry Mini v1", "Saved WIFI Creds");
+      Buzzer_Play(1, 900, 500);
+
+      Display_Show(" Syntry Mini v1", "Wifi Connecting.");
+      Buzzer_Play(1, 900, 500);
+
+      WifiClient_connect(wifiname, wifipass);
+      timeClient.begin();
+
+      webServer.sendHeader("Location", String("/wifi-connect?status=Saved%20wifi%20Credential!"), true);
+      webServer.send ( 302, "text/plain", "");
+      return;
+    }
+
+    webServer.sendHeader("Location", String("/wifi-connect?status=Something%20not%20right!"), true);
+    webServer.send ( 302, "text/plain", "");
+  });
+
   webServer.on("/access", []() {
-    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-    rfidMode = "access";
-    Buzzer_Play(1, 700, 50);
+    String action = webServer.arg("action");
+
+    if(action == "override") {
+      //TODO: Save log to SDCard
+      //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
+      Display_Show(" Syntry Mini v1", "ACCESS OVERRIDE");
+      Buzzer_Play(1, 900, 50);
+      Relay_Open();
+
+      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    } else {
+      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+      rfidMode = "access";
+      Buzzer_Play(1, 700, 50);
+    }
     webServer.send(200, "text/html", Helper_Hotspot_To_Access());
   });
 

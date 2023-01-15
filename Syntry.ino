@@ -1,27 +1,33 @@
 /* wiring the MFRC522 to ESP8266 (ESP-12)
-RST     = GPIO5    =  D1
-SDA(SS) = GPIO4    =  D2
-MOSI    = GPIO13   =  D7
-MISO    = GPIO12   =  D6
-SCK     = GPIO14   =  D5
-GND     = GND
-3.3V    = 3.3V
+  RST     = GPIO5    =  D1
+  SDA(SS) = GPIO4    =  D2
+  MOSI    = GPIO13   =  D7
+  MISO    = GPIO12   =  D6
+  SCK     = GPIO14   =  D5
+  GND     = GND
+  3.3V    = 3.3V
 */
 
 /* wiring the SD-Card to ESP8266 (ESP-12)
-SDA(SS) = GPI15    =  D8
-MOSI    = GPIO13   =  D7
-MISO    = GPIO12   =  D6
-SCK     = GPIO14   =  D5
-GND     = GND
-3.3V    = 3.3V
+  SDA(SS) = GPI15    =  D8
+  MOSI    = GPIO13   =  D7 + 220K Resistor
+  MISO    = GPIO12   =  D6
+  SCK     = GPIO14   =  D5
+  GND     = GND
+  3.3V    = 3.3V
 */
 
 //DEFAULT
 #include <SPI.h>
 #include <Wire.h> 
+#include <EEPROM.h>
 #include <SD.h>
-// #include <EEPROM.h>
+
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 //CUSTOM
 #include "Config.h"
@@ -38,31 +44,23 @@ GND     = GND
 #include "Light.h"
 #include "Buzzer.h"
 
-#include <ESP8266WiFi.h>
-//#include <WiFiClient.h>
-
 //NTP CLIENT
-#include <NTPClient.h>
-#include <WiFiUdp.h>
 const long utcOffsetInSeconds = 28800; // +8hrs
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
+//#include "WebRequest.h"
+
 //ADVANCE
 #include "WifiClient.h"
 #include "Hotspot.h"
-
 // #include "Settings.h"
-// #include "WebRequest.h"
-// #include "WebServer.h"
-
-File myFile;
 
 bool access(String uid) {
   if(uid == RST_KEYTAG) {
     SD.remove("users/admin");
     Display_Show(" Syntry Mini v1", "RESET ADMIN PASS");
-    Buzzer_Play(1, 1000, 100); delay(2000);
+    Buzzer_Play(1, 1000, 100); delay(1500);
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     return true;
   }
@@ -72,27 +70,29 @@ bool access(String uid) {
   Serial.println("UID: " + uid);
 
   String filepath = "users/" + uid;
-  myFile = SD.open(filepath);
+  File accessFile = SD.open(filepath);
 
-  if (!myFile) {
+  if (!accessFile) {
+    accessFile.close();
     Display_Show(" Syntry Mini v1", " ACCESS  DENIED");
     Buzzer_Play(1, 400, 50);
-    delay(1000);
+    delay(500);
 
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     return false;
   }
 
+  Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
+  Buzzer_Play(1, 900, 50); 
+  delay(1000);
+
+  String timing = String(timeClient.getFormattedTime());
+  Display_Show(" Syntry Mini v1", "TIME: "+timing);
+  
   //TODO: Save log to SDCard
   //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
-  Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
-  Buzzer_Play(1, 900, 50);
-  Relay_Open();
 
-  String timing = String(timeClient.getHours())+":"+String(timeClient.getMinutes())+":"+String(timeClient.getSeconds());
-  Serial.println(timing);
-  Display_Show(timing, " TAP YOUR CARD");
-  delay(3000);
+  Relay_Open();
 
   Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
   return true;
@@ -100,11 +100,11 @@ bool access(String uid) {
 
 bool add(String uid) {
   String filepath = "users/" + uid;
-  myFile = SD.open(filepath, FILE_WRITE);
+  File addFile = SD.open(filepath, FILE_WRITE);
 
-  if (myFile) {
-    myFile.println("Start of Logs.");
-    myFile.close();
+  if (addFile) {
+    addFile.print(""); //TODO: Should be date.
+    addFile.close();
     Display_Show(" Syntry Mini v1", " LOG: SAVED!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
@@ -132,10 +132,10 @@ bool remove(String uid) {
 
 bool verify(String uid) {
   String filepath = "users/" + uid;
-  myFile = SD.open(filepath);
+  File verifyFile = SD.open(filepath);
 
-  if (myFile) {
-    myFile.close();
+  if (verifyFile) {
+    verifyFile.close();
     Display_Show(" Syntry Mini v1", " LOG: EXISTING!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
@@ -195,52 +195,41 @@ void printDirectory(File dir, int numTabs) {
 }
 
 void setup() {
+  Serial.begin(BAUD_RATE);
+  SPI.begin();
+  
   Config_Init();
-  Relay_Init();
   Rfid_Init();
   SDCard_Init();
+
+  Relay_Init();
 
   WiFi.mode(WIFI_AP_STA); 
   Hotspot_broadcast();
 
-  //Check first the wifi.
-  String wifiname;
-  String wnpath = "settings/wifiname";
-  File wnfile = SD.open(wnpath);
-  if (wnfile) {
-    wifiname = wnfile.readString();
-  }
-
-  String wifipass;
-  String wppath = "settings/wifipass";
-  File wpfile = SD.open(wppath);
-  if (wpfile) {
-    wifipass = wpfile.readString();
-  }
-
-  if(wifiname != "" && wifipass != "") {
-    WifiClient_connect("GuestNetwork", "ahm2022!");
-    timeClient.begin();
-  }
-  delay(1000);
-
   Display_Init();
   Display_Show(" Syntry Mini v1", "by BytesCrafter");
-  Buzzer_Play(3, 1200, 500);
+  Buzzer_Play(3, 1200, 250);
 }
 
-void loop() {
-  timeClient.update();
+bool didTryConnect = false;
 
-  if(millis() - initTime <= timeSpan) {
-    return;
+void loop() {
+  Config_Loop();
+
+  Hotspot_loop();
+  if(!didTryConnect) {
+     WifiClient_connect();
+    didTryConnect = true;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    timeClient.update();
   }
 
   if(!isInit) {
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     isInit = true;
   }
-
-  Hotspot_loop();
   Rfid_Listen(&catch_Rfid);
 }

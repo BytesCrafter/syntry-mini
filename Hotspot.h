@@ -1,3 +1,8 @@
+/*
+  Module: WiFi AP Module.
+  Version: 0.1.0
+*/
+
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 
@@ -6,16 +11,13 @@ IPAddress apIP(172, 217, 28, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 
-String rfidMode = "access"; //access, add, remove
-
+String rfidMode = "access"; //default mode.
 String Rfid_Status() {
   return rfidMode;
 }
 
 unsigned long startTime;
 unsigned long expireTime = 300000; //5min
-
-File adminFile;
 
 void Hotspot_broadcast() {
   WiFi.mode(WIFI_AP);
@@ -35,14 +37,15 @@ void Hotspot_broadcast() {
 
     //Check if SDCard has admin password.
     String filepath = "users/admin";
-    adminFile = SD.open(filepath);
+    File loginFile = SD.open(filepath);
     bool isAuth = false;
 
-    if (adminFile) {
-      String sdPass = adminFile.readString();
+    if (loginFile) {
+      String sdPass = loginFile.readString();
       if(uname == "admin" && pword == sdPass) {
         isAuth = true;
       }
+      loginFile.close();
     } else {
       if(uname == "admin" && pword == "admin") {
         isAuth = true;
@@ -52,12 +55,12 @@ void Hotspot_broadcast() {
     if(isAuth) {
       webServer.sendHeader("Location", String("/menu"), true);
       Display_Show(" Syntry Mini v1", "WELCOME! ADMIN");
-      Buzzer_Play(1, 1000, 50);
+      Buzzer_Play(1, 1000, 50); delay(1000);
+      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     } else {
       webServer.sendHeader("Location", String("/"), true);
       Display_Show(" Syntry Mini v1", "REPORTING STOP!");
-      Buzzer_Play(1, 250, 50);
-      delay(1500);
+      Buzzer_Play(1, 250, 50); delay(1000);
       Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     }
     webServer.send ( 302, "text/plain", "");
@@ -84,11 +87,11 @@ void Hotspot_broadcast() {
       String filepath = "users/admin";
       SD.remove(filepath); //,ake sure delete if existing.
 
-      adminFile = SD.open(filepath, FILE_WRITE);
+      File pwFile = SD.open(filepath, FILE_WRITE);
 
-      if (adminFile) {
-        adminFile.print(confirmpass);
-        adminFile.close();
+      if (pwFile) {
+        pwFile.print(confirmpass);
+        pwFile.close();
         Display_Show(" Syntry Mini v1", "PASSWORD UPDATED");
         Buzzer_Play(1, 900, 1000);
 

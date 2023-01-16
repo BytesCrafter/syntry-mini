@@ -12,23 +12,23 @@ void SDCard_Init() {
   }
 }
 
-// String SDCard_Save(String filename, String data, bool overwrite = false) {
+void SDCard_Save(String filename, String data, bool newLine = true) {
   
-//   File writeFile = SD.open(filename, FILE_WRITE);
+  File writeFile = SD.open(filename, FILE_WRITE);
 
-//   if (writeFile) {
-//     if(overwrite) {
-//       writeFile.print(data);
-//     } else {
-//       writeFile.println(data);
-//     }
+  if (writeFile) {
+    if(newLine) {
+      writeFile.println(data);
+    } else {
+      writeFile.print(data);
+    }
     
-//     writeFile.close();
-//     Serial.println("SD: Saved Success!");
-//   } else {
-//     Serial.println("SD: Save Failed!");
-//   }
-// }
+    writeFile.close();
+    Serial.println("SD: Saved Success!");
+  } else {
+    Serial.println("SD: Save Failed!");
+  }
+}
 
 // String SDCard_Load(String filename) {
 

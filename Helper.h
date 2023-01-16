@@ -1,4 +1,18 @@
 
+String Helper_RandomString() {
+  const int len = 10;
+  char lists[] = {'1', '2','3', '4', '5','6', '7', '8', '9', '0'};
+  const byte listLen = sizeof(lists) / sizeof(lists[0]);
+  char notes[len+1];  //allow 1 extra for the NULL
+
+  for (int n = 0; n < len ; n++) {
+    notes[n] = lists[random(0, listLen)];
+    notes[n + 1] = '\0';
+  }
+
+  return String(notes);
+}
+
 String Helper_HttpHeader() {
   String ptr = "<!DOCTYPE html> <html>\n";
   ptr +="<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";

@@ -57,10 +57,10 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 // #include "Settings.h"
 
 bool access(String uid) {
-  if(uid == RST_KEYTAG) {
+  if(uid == Hotspot_Hostname()) {
     SD.remove("users/admin");
     Display_Show(" Syntry Mini v1", "RESET ADMIN PASS");
-    Buzzer_Play(1, 1000, 100); delay(1500);
+    Buzzer_Play(1, 1000, 100); delay(1000);
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     return true;
   }
@@ -86,8 +86,8 @@ bool access(String uid) {
   Buzzer_Play(1, 900, 50); 
   delay(1000);
 
-  String timing = String(timeClient.getFormattedTime());
-  Display_Show(" Syntry Mini v1", "TIME: "+timing);
+  String curTime = String(timeClient.getFormattedTime());
+  Display_Show(" Syntry Mini v1", " TIME: "+curTime);
   
   //TODO: Save log to SDCard
   //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
@@ -146,6 +146,24 @@ bool verify(String uid) {
   }
 }
 
+bool sethostname(String uid) {
+  String filepath = "settings/hostname";
+  SD.remove(filepath);
+  File pwFile = SD.open(filepath, FILE_WRITE);
+
+  if (pwFile) {
+    pwFile.print(uid);
+    pwFile.close();
+    Display_Show(" Syntry Mini v1", ">SET ADMIN: YES!");
+    Buzzer_Play(1, 900, 100); delay(500);
+    return true;
+  } else {
+    Display_Show(" Syntry Mini v1", ">SET ADMIN: NO!");
+    Buzzer_Play(1, 300, 100); delay(500);
+    return false;
+  }
+}
+
 bool catch_Rfid(String uid) {
   if(uid == "null") {
     return false;
@@ -159,7 +177,9 @@ bool catch_Rfid(String uid) {
     return remove(uid);
   } else if(Rfid_Status() == "verify") {
     return verify(uid);
-  } else {
+  } else if(Rfid_Status() == "sethostname") {
+    return sethostname(uid);
+  }  else {
     return false;
   }
 }

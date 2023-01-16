@@ -11,19 +11,26 @@ IPAddress apIP(172, 217, 28, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 
-String rfidMode = "access"; //default mode.
-String Rfid_Status() {
-  return rfidMode;
-}
-
 unsigned long startTime;
 unsigned long expireTime = 300000; //5min
+
+String Hotspot_Hostname() {
+  String filepath = "settings/hostname";
+  File curHost = SD.open(filepath);
+
+  if (curHost) {
+    return curHost.readString();
+    curHost.close();
+  } else {
+    return Helper_RandomString();
+  }
+}
 
 void Hotspot_broadcast() {
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   String preName = "Syntry Mini - ";
-  String postName = RST_KEYTAG;
+  String postName = Hotspot_Hostname();
   String allName = preName+postName;
   WiFi.softAP(allName);
 

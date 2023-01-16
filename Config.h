@@ -3,7 +3,6 @@
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define APP_VERSION "1.0.0" 
-#define RST_KEYTAG "80BA9126" 
 
 #define BAUD_RATE 9600 
 
@@ -19,6 +18,11 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 bool isInit = false;
 
+String rfidMode = "access"; //default mode.
+String Rfid_Status() {
+  return rfidMode;
+}
+
 void Config_Init() {
   //Do something!
 }
@@ -28,8 +32,12 @@ void Config_Loop() {
     String command = Serial.readStringUntil('\n');
     command.trim();
 
-    if(command.equals("white")) {
-      Serial.println("White");
+    if(command.equals("goto sethostname")) {
+      rfidMode = "sethostname";
+      Serial.println("TAP TO TAG ADMIN");
+    } else if(command.equals("goto access")) {
+      rfidMode = "access";
+      Serial.println("TAP YOUR CARD MODE");
     } else if(command.equals("reset")) {
       ESP.reset();
     } else if(command.equals("restart")) {

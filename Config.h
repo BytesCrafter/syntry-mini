@@ -2,12 +2,12 @@
 //Your Domain name with URL path or IP address with path
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
-#define APP_VERSION "1.0.0" 
+#define APP_VERSION "1.1.0" 
 
 #define BAUD_RATE 9600 
 
 #define BUZZER 15 //pin where buzzer is connect!
-#define CONFIG_RELAY 1 //pin where RELAY is connect
+#define CONFIG_RELAY 3 //pin where RELAY is connect
 
 #define LIGHT_RED 9 
 #define LIGHT_GREEN 8 

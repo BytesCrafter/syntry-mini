@@ -222,8 +222,6 @@ void setup() {
   Rfid_Init();
   SDCard_Init();
 
-  Relay_Init();
-
   WiFi.mode(WIFI_AP_STA); 
   Hotspot_broadcast();
 
@@ -249,6 +247,7 @@ void loop() {
 
   if(!isInit) {
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    Relay_Init();
     isInit = true;
   }
   Rfid_Listen(&catch_Rfid);

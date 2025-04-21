@@ -16,7 +16,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define SDCARD_PIN 2
 
-bool isInit = false;
+bool isLoaded = false;
 
 String rfidMode = "access"; //default mode.
 String Rfid_Status() {

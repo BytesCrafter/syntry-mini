@@ -12,7 +12,7 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 //Initilialize RFID module.
-void Rfid_Init() {
+void Rfid_Init(void (*callback)(String, String, String, String)) {
   //SPI.begin();
 
   mfrc522.PCD_Init();		// Init MFRC522
@@ -36,6 +36,7 @@ void Rfid_Init() {
   //   Serial.println(F("DEFECT or UNKNOWN"));
   // Serial.println();
   
+  callback(" Syntry Mini v1", "> RFID Loaded...", "", "");
   Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 }
 

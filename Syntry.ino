@@ -1,6 +1,8 @@
-/* wiring the MFRC522 to ESP8266 (ESP-12)
-  RST     = GPIO5    =  D1
-  SDA(SS) = GPIO4    =  D2
+/* ESP 8266 DIAGRAM https://lastminuteengineers.com/wp-content/uploads/iot/ESP8266-Pinout-NodeMCU.png */
+
+/* wiring the MFRC522 to ESP8266 (042125) https://randomnerdtutorials.com/esp8266-nodemcu-mfrc522-rfid-reader-arduino/
+  RST     = GPIO16   =  D0
+  SDA(SS) = GPIO02   =  D4
   MOSI    = GPIO13   =  D7
   MISO    = GPIO12   =  D6
   SCK     = GPIO14   =  D5
@@ -8,13 +10,27 @@
   3.3V    = 3.3V
 */
 
-/* wiring the SD-Card to ESP8266 (ESP-12)
-  SDA(SS) = GPI15    =  D8
+/* wiring the SD-Card to ESP8266 (042125) https://github.com/G6EJD/ESP8266-SD-Card-Reading-Writing/blob/master/ESP8266_D1_MicroSD_Test.ino
+  CS      = GPIO02   =  D4
   MOSI    = GPIO13   =  D7 + 220K Resistor
   MISO    = GPIO12   =  D6
   SCK     = GPIO14   =  D5
   GND     = GND
   3.3V    = 3.3V
+*/
+
+/* wiring the LCD L2C to ESP8266 (042125)
+  SCL     = GPIO5   =  D1
+  SDA     = GPIO4   =  D2
+  GND     = GND
+  3.3V    = 3.3V
+*/
+
+/* wiring the LIGHTS to ESP8266 (042125)
+  LED RED = GPIO09   =  SD2
+  LED GRN = GPIO08   =  SD1
+  RELAY   = GPIO03   =  RX
+  BUZZ    = GPIO15   =  D8
 */
 
 //DEFAULT
@@ -84,10 +100,9 @@ bool access(String uid) {
 
   Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
   Buzzer_Play(1, 900, 50); 
-  delay(1000);
 
-  String curTime = String(timeClient.getFormattedTime());
-  Display_Show(" Syntry Mini v1", " TIME: "+curTime);
+  //String curTime = String(timeClient.getFormattedTime());
+  //Display_Show(" Syntry Mini v1", " TIME: "+curTime);
   
   //TODO: Save log to SDCard
   //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
@@ -217,38 +232,50 @@ void printDirectory(File dir, int numTabs) {
 void setup() {
   Serial.begin(BAUD_RATE);
   SPI.begin();
-  
-  Config_Init();
-  Rfid_Init();
-  SDCard_Init();
 
-  WiFi.mode(WIFI_AP_STA); 
-  Hotspot_broadcast();
+  Config_Init();
+  Relay_Init();
+  Buzzer_Play(1, 1400, 250);
 
   Display_Init();
   Display_Show(" Syntry Mini v1", "by BytesCrafter");
-  Buzzer_Play(3, 1200, 250);
+  Buzzer_Play(1, 1200, 250);
+
+  SDCard_Init(&Display_Show);
+  Buzzer_Play(1, 1000, 500);
+
+  Rfid_Init(&Display_Show);
+  Buzzer_Play(1, 800, 500);
+
+  WiFi.mode(WIFI_AP_STA); 
+  Hotspot_broadcast();
+  Display_Show(" Syntry Mini v1", "> WIFI Loaded...");
+  Buzzer_Play(1, 600, 500);
+  
+  Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+  Buzzer_Play(3, 1200, 100);
+
+  isLoaded = true;
 }
 
 bool didTryConnect = false;
 
 void loop() {
+  if(!isLoaded) {
+    return ;
+  }
   Config_Loop();
 
-  Hotspot_loop();
-  if(!didTryConnect) {
-     WifiClient_connect();
-    didTryConnect = true;
-  }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    timeClient.update();
-  }
-
-  if(!isInit) {
-    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-    Relay_Init();
-    isInit = true;
-  }
   Rfid_Listen(&catch_Rfid);
+
+  Hotspot_loop();
+
+  // if(!didTryConnect) {
+  //   //WifiClient_connect();
+  //   didTryConnect = true;
+  // }
+
+  // if (WiFi.status() == WL_CONNECTED) {
+  //   timeClient.update();
+  // }
 }

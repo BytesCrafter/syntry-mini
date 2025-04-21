@@ -4,10 +4,12 @@
 */
 
 //Initialize the SD Card.
-void SDCard_Init() {
+void SDCard_Init(void (*callback)(String, String, String, String)) {
   if (!SD.begin(SDCARD_PIN)) {
+    callback(" Syntry Mini v1", "> SDC Error...", "", "");
     Serial.println("SDCard initialization failed!");
   } else {
+    callback(" Syntry Mini v1", "> SDC Loaded...", "", "");
     Serial.println("SDCard initialization done.");
   }
 }

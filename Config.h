@@ -2,19 +2,20 @@
 //Your Domain name with URL path or IP address with path
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
-#define APP_VERSION "1.1.0" 
+#define APP_VERSION "1.2.0" 
 
 #define BAUD_RATE 9600 
 
-#define BUZZER 15 //pin where buzzer is connect!
-#define CONFIG_RELAY 3 //pin where RELAY is connect
+#define BUZZER 15 // D8 - pin where buzzer is connect!
+#define CONFIG_RELAY 1 // TX - pin where RELAY is connect
 
 #define LIGHT_RED 9 
 #define LIGHT_GREEN 8 
 
 #define WAIT_OPEN 2000 
 
-#define SDCARD_PIN 2
+#define RFID_CS_PIN 0 // D3 - Configurable, see typical pin layout above /def 4
+#define SDCARD_CS_PIN 2 // D4 - 
 
 bool isLoaded = false;
 
@@ -24,7 +25,11 @@ String Rfid_Status() {
 }
 
 void Config_Init() {
-  //Do something!
+  // // Make sure CS lines are outputs and start HIGH (inactive)
+  // pinMode(SDCARD_CS_PIN, OUTPUT); digitalWrite(SDCARD_CS_PIN, HIGH);
+
+  // // Make sure CS lines are outputs and start HIGH (inactive)
+  // pinMode(RFID_CS_PIN, OUTPUT); digitalWrite(RFID_CS_PIN, HIGH);
 }
 
 void Config_Loop() {

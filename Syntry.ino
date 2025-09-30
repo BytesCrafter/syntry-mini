@@ -2,7 +2,7 @@
 
 /* wiring the MFRC522 to ESP8266 (042125) https://randomnerdtutorials.com/esp8266-nodemcu-mfrc522-rfid-reader-arduino/
   RST     = GPIO16   =  D0
-  SDA(SS) = GPIO02   =  D4
+  SDA(SS) = GPIO02   =  D3
   MOSI    = GPIO13   =  D7
   MISO    = GPIO12   =  D6
   SCK     = GPIO14   =  D5
@@ -12,8 +12,8 @@
 
 /* wiring the SD-Card to ESP8266 (042125) https://github.com/G6EJD/ESP8266-SD-Card-Reading-Writing/blob/master/ESP8266_D1_MicroSD_Test.ino
   CS      = GPIO02   =  D4
-  MOSI    = GPIO13   =  D7 + 220K Resistor
-  MISO    = GPIO12   =  D6
+  MOSI    = GPIO13   =  D7
+  MISO    = GPIO12   =  D6 + 220R Resistor
   SCK     = GPIO14   =  D5
   GND     = GND
   3.3V    = 3.3V
@@ -89,25 +89,24 @@ bool access(String uid) {
   File accessFile = SD.open(filepath);
 
   if (!accessFile) {
-    accessFile.close();
     Display_Show(" Syntry Mini v1", " ACCESS  DENIED");
     Buzzer_Play(1, 400, 50);
     delay(500);
 
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-    return false;
+  } else {
+    accessFile.close();
+    //String curTime = String(timeClient.getFormattedTime());
+    //Display_Show(" Syntry Mini v1", " TIME: "+curTime);
+    
+    //TODO: Save log to SDCard
+    //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
+
+    Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
+    Buzzer_Play(1, 900, 50); 
+
+    Relay_Open();
   }
-
-  Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
-  Buzzer_Play(1, 900, 50); 
-
-  //String curTime = String(timeClient.getFormattedTime());
-  //Display_Show(" Syntry Mini v1", " TIME: "+curTime);
-  
-  //TODO: Save log to SDCard
-  //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
-
-  Relay_Open();
 
   Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
   return true;
@@ -235,25 +234,23 @@ void setup() {
 
   Config_Init();
   Relay_Init();
-  Buzzer_Play(1, 1400, 250);
+  Buzzer_Play(1, 500, 200);
 
   Display_Init();
   Display_Show(" Syntry Mini v1", "by BytesCrafter");
-  Buzzer_Play(1, 1200, 250);
+  Buzzer_Play(1, 200, 1000);
 
   SDCard_Init(&Display_Show);
-  Buzzer_Play(1, 1000, 500);
+  Buzzer_Play(1, 200, 500);
 
   Rfid_Init(&Display_Show);
-  Buzzer_Play(1, 800, 500);
+  Buzzer_Play(1, 200, 500);
 
-  WiFi.mode(WIFI_AP_STA); 
   Hotspot_broadcast();
-  Display_Show(" Syntry Mini v1", "> WIFI Loaded...");
-  Buzzer_Play(1, 600, 500);
+  Buzzer_Play(1, 200, 2500);
   
   Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-  Buzzer_Play(3, 1200, 100);
+  Buzzer_Play(2, 100, 100);
 
   isLoaded = true;
 }

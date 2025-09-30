@@ -7,7 +7,7 @@
 #include <ESP8266WebServer.h>
 
 const byte DNS_PORT = 53;
-IPAddress apIP(172, 217, 28, 1);
+IPAddress apIP(192, 168, 4, 1);
 DNSServer dnsServer;
 ESP8266WebServer webServer(80);
 
@@ -207,15 +207,17 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_Login());
   });
   webServer.begin();
+
+  Display_Show(" Syntry Mini v1", "> WIFI Loaded...");
 }
 
 void Hotspot_loop() {
+  dnsServer.processNextRequest();
+  webServer.handleClient();
+
   if(rfidMode != "access" && millis() - startTime > expireTime) {
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     rfidMode = "access";
     Buzzer_Play(1, 700, 50);
   }
-  
-  dnsServer.processNextRequest();
-  webServer.handleClient();
 }

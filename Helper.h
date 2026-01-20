@@ -57,7 +57,7 @@ String Helper_HttpHeader() {
   ptr +="input[type=submit]:active{transform:translateY(0)}";
   ptr +=".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}";
   ptr +=".grid form{margin:0}";
-  ptr +=".grid input[type=submit]{height:100px;margin:0;font-size:15px;padding:10px}";
+  ptr +=".grid input[type=submit]{height:67px;margin:0;font-size:15px;padding:10px}";
   ptr +=".split{display:grid;grid-template-columns:1fr 1fr;gap:12px}";
   ptr +=".split form{margin:0}";
   ptr +=".split input[type=submit]{margin:0}";
@@ -95,10 +95,11 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
   ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
-  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users' style='background:#8e44ad'></form>";
+  ptr +="<form action='/boot-logs' method='get'><input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
   ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
   ptr +="<form action='/change-hostname' method='get'><input type='submit' value='Change Hostname'></form>";
+  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users' style='background:#8e44ad'></form>";
   ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="</div>";
   ptr +="<div class='split'>";
@@ -233,6 +234,29 @@ String Helper_Hotspot_ManageUsers(String message = "") {
   }
   
   Config_DeselectAll();
+  
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
+String Helper_Hotspot_BootLogs() {
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Boot Logs</h1><h5>Initialization Messages</h5>";
+  
+  if(bootLogCount > 0) {
+    ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057'>";
+    
+    for(int i = 0; i < bootLogCount; i++) {
+      ptr +="<div style='padding:8px;border-bottom:1px solid #e9ecef;font-family:monospace;font-size:12px'>";
+      ptr += String(i + 1) + ". " + bootLogs[i];
+      ptr +="</div>";
+    }
+    
+    ptr +="</div>";
+  } else {
+    ptr +="<p style='text-align:center;color:#6c757d;padding:20px'>No boot logs available</p>";
+  }
   
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();

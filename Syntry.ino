@@ -293,7 +293,10 @@ void setup() {
   SPI.begin();
 
   Config_Init();
+  Config_AddBootLog("System initialized");
+  
   Relay_Init();
+  Config_AddBootLog("Relay initialized");
   Buzzer_Play(1, 500, 200);
 
   Display_Init();
@@ -312,6 +315,7 @@ void setup() {
   Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
   Buzzer_Play(2, 100, 100);
 
+  Config_AddBootLog("Setup complete - Ready for operation");
   isLoaded = true;
 }
 

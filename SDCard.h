@@ -13,21 +13,21 @@ void SDCard_Init(void (*callback)(String, String, String, String)) {
   
   if (!SD.begin(SDCARD_CS_PIN)) {
     callback(String(" ") + APP_NAME, "> SDC Error...", "", "");
-    Serial.println("SDCard initialization failed!");
-    Serial.println("Check: 1) Card inserted 2) Wiring 3) Card format (FAT32)");
+    Config_AddBootLog("SDCard: Check: 1) Card inserted 2) Wiring 3) Format (FAT32)");
+    Config_AddBootLog("SDCard: initialization failed!");
     sdCardStatus = false;
   } else {
     callback(String(" ") + APP_NAME, "> SDC Loaded...", "", "");
-    Serial.println("SDCard initialization done.");
+    Config_AddBootLog("SDCard: initialization done.");
     
     // Verify card is working by attempting to open root directory
     File root = SD.open("/");
     if(root) {
-      Serial.println("SD Card  verified and ready");
+      Config_AddBootLog("SDCard: verified and ready");
       root.close();
       sdCardStatus = true;
     } else {
-      Serial.println("SD Card mount failed!");
+      Config_AddBootLog("SDCard: mount failed!");
       sdCardStatus = false;
     }
   }
@@ -48,9 +48,9 @@ void SDCard_Save(String filename, String data, bool newLine = true) {
     }
     writeFile.flush();  // Ensure data is written
     writeFile.close();
-    Serial.println("SD: Saved Success - " + filename);
+    Serial.println("SDCard: Saved Success - " + filename);
   } else {
-    Serial.println("SD: Save Failed - " + filename);
+    Serial.println("SDCard: Save Failed - " + filename);
   }
   
   Config_DeselectAll();  // Deselect after operation

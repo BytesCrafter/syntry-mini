@@ -75,6 +75,10 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_ManageUsers(status));
   });
 
+  webServer.on("/boot-logs", []() {
+    webServer.send(200, "text/html", Helper_Hotspot_BootLogs());
+  });
+
   webServer.on("/delete-user", []() {
     String uid = webServer.arg("uid");
 

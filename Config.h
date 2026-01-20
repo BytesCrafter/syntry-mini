@@ -28,6 +28,19 @@ bool rfidStatus = false;
 bool displayStatus = false;
 bool wifiStatus = false;
 
+// Boot log storage (last 20 initialization messages)
+#define MAX_BOOT_LOGS 20
+String bootLogs[MAX_BOOT_LOGS];
+int bootLogCount = 0;
+
+void Config_AddBootLog(String message) {
+  if(bootLogCount < MAX_BOOT_LOGS) {
+    bootLogs[bootLogCount] = message;
+    bootLogCount++;
+  }
+  Serial.println(message);
+}
+
 String rfidMode = "access"; //default mode.
 String Rfid_Status() {
   return rfidMode;

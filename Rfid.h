@@ -17,24 +17,18 @@ void Rfid_Init(void (*callback)(String, String, String, String)) {
   mfrc522.PCD_Init();		// Init MFRC522
   delay(500);				// Optional delay. Some board do need more time after init to be ready, see Readme
 
-  Serial.println(F("*****************************"));
-  Serial.println(F("MFRC522 Digital self test"));
-  Serial.println(F("*****************************"));
+  Config_AddBootLog("MFRC522: Digital self test");
   mfrc522.PCD_DumpVersionToSerial();  // Show version of PCD - MFRC522 Card Reader
-  Serial.println(F("-----------------------------"));
-  Serial.println(F("Only known versions supported"));
-  Serial.println(F("-----------------------------"));
+  Config_AddBootLog("MFRC522: Only known versions supported");
   
-  Serial.println(F("Performing test..."));
+  Config_AddBootLog("MFRC522: Performing test...");
   bool result = mfrc522.PCD_PerformSelfTest(); // perform the test
-  Serial.println(F("-----------------------------"));
-  Serial.print(F("Result: "));
   if (result) {
-    Serial.println(F("OK"));
+    Config_AddBootLog("MFRC522: Result: OK");
     callback(String(" ") + APP_NAME, "> RFID Loaded...", "", "");
     rfidStatus = true;
   } else {
-    Serial.println(F("DEFECT or UNKNOWN"));
+    Config_AddBootLog("MFRC522: Result: DEFECT or UNKNOWN");
     callback(String(" ") + APP_NAME, "> RFID Error...", "", "");
   }
   Serial.println();

@@ -62,9 +62,9 @@ void Display_Init() {
     delay(100);
     
     displayStatus = true;
-    Serial.println("LCD Display: OK");
+    Config_AddBootLog("Display: LCD initialized (I2C 0x27)");
   } else {
-    Serial.println("LCD Error at 0x27");
+    Config_AddBootLog("Display: LCD Error at 0x27");
   }
 }
 

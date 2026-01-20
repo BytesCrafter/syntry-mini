@@ -55,6 +55,13 @@ String Rfid_Status() {
 #define EEPROM_HOST_ADDR 34
 #define EEPROM_HOST_MAX_LEN 20
 
+// EEPROM WiFi Credentials (stored after hostname)
+#define EEPROM_WIFI_SSID_ADDR 56
+#define EEPROM_WIFI_SSID_MAX_LEN 64
+#define EEPROM_WIFI_PASS_ADDR 121
+#define EEPROM_WIFI_PASS_MAX_LEN 64
+#define EEPROM_WIFI_AUTO_ADDR 186  // 1 byte for auto-connect flag
+
 void Config_Init() {
   EEPROM.begin(EEPROM_SIZE);
   
@@ -123,6 +130,88 @@ String Config_LoadPassword() {
   }
   
   Serial.println("Password loaded from EEPROM");
+  return password;
+}
+
+// Save WiFi Auto-Connect setting to EEPROM
+void Config_SaveWifiAuto(bool autoConnect) {
+  EEPROM.write(EEPROM_WIFI_AUTO_ADDR, autoConnect ? 1 : 0);
+  EEPROM.commit();
+}
+
+// Load WiFi Auto-Connect setting from EEPROM (default: false)
+bool Config_LoadWifiAuto() {
+  byte value = EEPROM.read(EEPROM_WIFI_AUTO_ADDR);
+  return (value == 1);
+}
+
+// Save WiFi SSID to EEPROM
+bool Config_SaveWifiSSID(String ssid) {
+  if(ssid.length() > EEPROM_WIFI_SSID_MAX_LEN) {
+    return false;
+  }
+  
+  // Write SSID length
+  EEPROM.write(EEPROM_WIFI_SSID_ADDR, ssid.length());
+  
+  // Write SSID string
+  for(int i = 0; i < ssid.length(); i++) {
+    EEPROM.write(EEPROM_WIFI_SSID_ADDR + 1 + i, ssid[i]);
+  }
+  
+  EEPROM.commit();
+  return true;
+}
+
+// Load WiFi SSID from EEPROM
+String Config_LoadWifiSSID() {
+  int length = EEPROM.read(EEPROM_WIFI_SSID_ADDR);
+  
+  // If length is invalid, return empty
+  if(length == 0 || length > EEPROM_WIFI_SSID_MAX_LEN || length == 255) {
+    return "";
+  }
+  
+  String ssid = "";
+  for(int i = 0; i < length; i++) {
+    ssid += char(EEPROM.read(EEPROM_WIFI_SSID_ADDR + 1 + i));
+  }
+  
+  return ssid;
+}
+
+// Save WiFi Password to EEPROM
+bool Config_SaveWifiPassword(String password) {
+  if(password.length() > EEPROM_WIFI_PASS_MAX_LEN) {
+    return false;
+  }
+  
+  // Write password length
+  EEPROM.write(EEPROM_WIFI_PASS_ADDR, password.length());
+  
+  // Write password string
+  for(int i = 0; i < password.length(); i++) {
+    EEPROM.write(EEPROM_WIFI_PASS_ADDR + 1 + i, password[i]);
+  }
+  
+  EEPROM.commit();
+  return true;
+}
+
+// Load WiFi Password from EEPROM
+String Config_LoadWifiPassword() {
+  int length = EEPROM.read(EEPROM_WIFI_PASS_ADDR);
+  
+  // If length is invalid, return empty
+  if(length == 0 || length > EEPROM_WIFI_PASS_MAX_LEN || length == 255) {
+    return "";
+  }
+  
+  String password = "";
+  for(int i = 0; i < length; i++) {
+    password += char(EEPROM.read(EEPROM_WIFI_PASS_ADDR + 1 + i));
+  }
+  
   return password;
 }
 

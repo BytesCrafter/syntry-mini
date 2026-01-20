@@ -310,7 +310,20 @@ void setup() {
   Buzzer_Play(1, 200, 500);
 
   Hotspot_broadcast();
+  Config_AddBootLog("WiFi hotspot initialized");
   Buzzer_Play(1, 200, 2500);
+  
+  // Auto-connect to saved WiFi if credentials exist and auto-connect is enabled
+  String savedSSID = Config_LoadWifiSSID();
+  bool autoConnect = Config_LoadWifiAuto();
+  if(savedSSID != "" && autoConnect) {
+    Config_AddBootLog("WiFi: Auto-connect enabled");
+    WifiClient_connect();
+  } else if(savedSSID == "") {
+    Config_AddBootLog("WiFi: No saved credentials");
+  } else {
+    Config_AddBootLog("WiFi: Auto-connect disabled");
+  }
   
   Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
   Buzzer_Play(2, 100, 100);

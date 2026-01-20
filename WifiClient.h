@@ -7,26 +7,28 @@
 #include <WiFiClient.h>
 
 //Connect your controller to WiFi
-void WifiClient_connect(String apName = "Syntry-AP", String apPass = "bytescrafter") {
+void WifiClient_connect(String apName = "", String apPass = "") {
 
-  //Get WiFi Saved AP name.
-  String ssid = apName;
-  String wnpath = "settings/wifiname";
-  File wnfile = SD.open(wnpath);
-  if (wnfile) {
-    ssid = wnfile.readString();
+  //Get WiFi credentials from EEPROM
+  String ssid = Config_LoadWifiSSID();
+  String password = Config_LoadWifiPassword();
+  
+  // Use provided parameters if EEPROM is empty
+  if(ssid == "" && apName != "") {
+    ssid = apName;
   }
-
-  //Get WiFi Saved AP pword.
-  String password = apPass;
-  String wppath = "settings/wifipass";
-  File wpfile = SD.open(wppath);
-  if (wpfile) {
-    password = wpfile.readString();
+  if(password == "" && apPass != "") {
+    password = apPass;
+  }
+  
+  // If still no credentials, return
+  if(ssid == "" || password == "") {
+    Config_AddBootLog("WiFi: No credentials stored");
+    return;
   }
 
   //Connect to WiFi Network
-  Serial.println("Connecting to WiFi...");
+  Config_AddBootLog("WiFi: Connecting to " + ssid);
   Display_Show(String(" ") + APP_NAME, "WiFi Connecting.");
   Buzzer_Play(1, 900, 300);
   WiFi.begin(ssid, password);
@@ -39,15 +41,17 @@ void WifiClient_connect(String apName = "Syntry-AP", String apPass = "bytescraft
   }
 
   if (WiFi.status() != WL_CONNECTED || retries > 14) {
-    Serial.println("WiFi connection FAILED");
+    Config_AddBootLog("WiFi: Connection failed");
     Display_Show(String(" ") + APP_NAME, "Wifi Conn Failed");
     Buzzer_Play(1, 900, 500);
+    wifiStatus = false;
   } else {
     timeClient.begin();
 
-    Serial.println("WiFi Connected!");
+    Config_AddBootLog("WiFi: Connected!");
     String ipAddress = WiFi.localIP().toString().c_str();
-    Serial.println("IP address: " + ipAddress);
+    Config_AddBootLog("WiFi: IP " + ipAddress);
+    wifiStatus = true;
 
     String filepath = "settings/ipaddress";
     SD.remove(filepath); //,ake sure delete if existing.

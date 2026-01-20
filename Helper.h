@@ -175,12 +175,47 @@ String Helper_Hotspot_ChangeHostname(String message = "") {
 
 String Helper_Hotspot_ConnectWifi(String message = "") {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>WiFi Setup</h1><h5>Connect to network</h5>";
+  ptr +="<h1>WiFi Setup</h1><h5>Network connection</h5>";
   if(message != "") ptr +="<h6>"+message+"</h6>";
+  
+  // Show current WiFi status
+  ptr +="<div style='background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:20px'>";
+  ptr +="<p style='margin:0;color:#495057'><b>Status:</b> ";
+  if(WiFi.status() == WL_CONNECTED) {
+    ptr +="<span style='color:#28a745'>Connected</span><br>";
+    ptr +="<b>SSID:</b> " + WiFi.SSID() + "<br>";
+    ptr +="<b>IP:</b> " + WiFi.localIP().toString() + "";
+  } else {
+    ptr +="<span style='color:#dc3545'>Disconnected</span>";
+  }
+  ptr +="</p><p style='margin:8px 0 0 0;color:#495057'><b>Auto-Connect:</b> ";
+  ptr += Config_LoadWifiAuto() ? "<span style='color:#28a745'>Enabled</span>" : "<span style='color:#6c757d'>Disabled</span>";
+  ptr +="</p></div>";
+  
+  // Connection controls
+  if(WiFi.status() == WL_CONNECTED) {
+    ptr +="<form action='/wifi-disconnect' method='get'><input type='submit' value='Disconnect' style='background:#dc3545'></form>";
+  } else {
+    String savedSSID = Config_LoadWifiSSID();
+    if(savedSSID != "") {
+      ptr +="<form action='/wifi-manual-connect' method='get'><input type='submit' value='Connect to: " + savedSSID + "' style='background:#28a745'></form>";
+    }
+  }
+  
+  // Auto-connect toggle
+  if(Config_LoadWifiAuto()) {
+    ptr +="<form action='/wifi-toggle-auto' method='get'><input type='submit' value='Disable Auto-Connect' style='background:#6c757d'></form>";
+  } else {
+    ptr +="<form action='/wifi-toggle-auto' method='get'><input type='submit' value='Enable Auto-Connect' style='background:#17a085'></form>";
+  }
+  
+  // WiFi credentials form
+  ptr +="<h5 style='margin-top:30px;margin-bottom:15px'>Update Credentials</h5>";
   ptr +="<form action='/save-wifi' method='get'>";
   ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
   ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
-  ptr +="<input type='submit' value='CONNECT'></form>";
+  ptr +="<input type='submit' value='SAVE & CONNECT'></form>";
+  
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();
   return ptr;

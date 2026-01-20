@@ -152,40 +152,55 @@ void Hotspot_broadcast() {
     String wifipass = webServer.arg("wifipass");
 
     if(wifiname != "" && wifipass != "") {
-      String filepath;
-      File wifiCon;      
+      // Save to EEPROM
+      bool ssidSaved = Config_SaveWifiSSID(wifiname);
+      bool passSaved = Config_SaveWifiPassword(wifipass);
+      
+      if(ssidSaved && passSaved) {
+        Config_AddBootLog("WiFi: Credentials saved to EEPROM");
+        Display_Show(String(" ") + APP_NAME, "Saved WIFI Creds");
+        Buzzer_Play(1, 900, 500);
 
-      filepath = "settings/wifiname";
-      SD.remove(filepath); //,ake sure delete if existing.
-      wifiCon = SD.open(filepath, FILE_WRITE);
-      if (wifiCon) {
-        wifiCon.print(wifiname);
-        wifiCon.close();
+        Display_Show(String(" ") + APP_NAME, "Wifi Connecting.");
+        Buzzer_Play(1, 900, 500);
+
+        WifiClient_connect(wifiname, wifipass);
+        timeClient.begin();
+
+        webServer.sendHeader("Location", String("/wifi-connect?status=Saved%20and%20connected!"), true);
+        webServer.send ( 302, "text/plain", "");
+        return;
+      } else {
+        webServer.sendHeader("Location", String("/wifi-connect?status=Credentials%20too%20long!"), true);
+        webServer.send ( 302, "text/plain", "");
+        return;
       }
-
-      filepath = "settings/wifipass";
-      SD.remove(filepath); //,ake sure delete if existing.
-      wifiCon = SD.open(filepath, FILE_WRITE);
-      if (wifiCon) {
-        wifiCon.print(wifipass);
-        wifiCon.close();
-      }
-
-      Display_Show(String(" ") + APP_NAME, "Saved WIFI Creds");
-      Buzzer_Play(1, 900, 500);
-
-      Display_Show(String(" ") + APP_NAME, "Wifi Connecting.");
-      Buzzer_Play(1, 900, 500);
-
-      WifiClient_connect(wifiname, wifipass);
-      timeClient.begin();
-
-      webServer.sendHeader("Location", String("/wifi-connect?status=Saved%20wifi%20Credential!"), true);
-      webServer.send ( 302, "text/plain", "");
-      return;
     }
 
-    webServer.sendHeader("Location", String("/wifi-connect?status=Something%20not%20right!"), true);
+    webServer.sendHeader("Location", String("/wifi-connect?status=Missing%20credentials!"), true);
+    webServer.send ( 302, "text/plain", "");
+  });
+
+  webServer.on("/wifi-manual-connect", []() {
+    WifiClient_connect();
+    webServer.sendHeader("Location", String("/wifi-connect?status=Connecting..."), true);
+    webServer.send ( 302, "text/plain", "");
+  });
+
+  webServer.on("/wifi-disconnect", []() {
+    WiFi.disconnect();
+    wifiStatus = false;
+    Config_AddBootLog("WiFi: Manually disconnected");
+    webServer.sendHeader("Location", String("/wifi-connect?status=Disconnected"), true);
+    webServer.send ( 302, "text/plain", "");
+  });
+
+  webServer.on("/wifi-toggle-auto", []() {
+    bool currentAuto = Config_LoadWifiAuto();
+    Config_SaveWifiAuto(!currentAuto);
+    String status = !currentAuto ? "Auto-connect%20enabled" : "Auto-connect%20disabled";
+    Config_AddBootLog("WiFi: Auto-connect " + String(!currentAuto ? "enabled" : "disabled"));
+    webServer.sendHeader("Location", String("/wifi-connect?status=") + status, true);
     webServer.send ( 302, "text/plain", "");
   });
 

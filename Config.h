@@ -7,8 +7,9 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define BAUD_RATE 9600 
 
-#define BUZZER 15 // D8 - pin where buzzer is connect!
-#define CONFIG_RELAY 1 // TX - pin where RELAY is connect
+#define BUZZER 15 // D8/GPIO15 - Buzzer pin
+// GPIO16 (D0) has no boot mode restrictions - perfect for relay!
+#define CONFIG_RELAY 16 // D0/GPIO16 - RELAY moved here (was RFID RST)
 
 #define LIGHT_RED 9 
 #define LIGHT_GREEN 8 
@@ -39,11 +40,34 @@ String Rfid_Status() {
 void Config_Init() {
   EEPROM.begin(EEPROM_SIZE);
   
-  // // Make sure CS lines are outputs and start HIGH (inactive)
-  // pinMode(SDCARD_CS_PIN, OUTPUT); digitalWrite(SDCARD_CS_PIN, HIGH);
+  // CRITICAL: Initialize CS pins HIGH (inactive) BEFORE SPI.begin()
+  pinMode(SDCARD_CS_PIN, OUTPUT);
+  digitalWrite(SDCARD_CS_PIN, HIGH);
+  
+  pinMode(RFID_CS_PIN, OUTPUT);
+  digitalWrite(RFID_CS_PIN, HIGH);
+  
+  Serial.println("CS Pins initialized");
+}
 
-  // // Make sure CS lines are outputs and start HIGH (inactive)
-  // pinMode(RFID_CS_PIN, OUTPUT); digitalWrite(RFID_CS_PIN, HIGH);
+// SPI Bus Management - Call before using RFID
+void Config_SelectRFID() {
+  digitalWrite(SDCARD_CS_PIN, HIGH);  // Deselect SD Card
+  delayMicroseconds(10);
+  digitalWrite(RFID_CS_PIN, LOW);     // Select RFID
+}
+
+// SPI Bus Management - Call before using SD Card
+void Config_SelectSDCard() {
+  digitalWrite(RFID_CS_PIN, HIGH);    // Deselect RFID
+  delayMicroseconds(10);
+  digitalWrite(SDCARD_CS_PIN, LOW);   // Select SD Card
+}
+
+// SPI Bus Management - Deselect all devices
+void Config_DeselectAll() {
+  digitalWrite(RFID_CS_PIN, HIGH);
+  digitalWrite(SDCARD_CS_PIN, HIGH);
 }
 
 // Save password to EEPROM

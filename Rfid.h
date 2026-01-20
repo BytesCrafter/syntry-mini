@@ -6,12 +6,14 @@
 //Declare libraries
 #include <MFRC522.h>
 
-//Set the target pin.
-#define RST_PIN 16 // D0 - Configurable, see typical pin layout above /def 5
+//Set the target pin - Using software reset instead of hardware RST
+#define RST_PIN 0 // Not used - using soft reset Prev: GPIO16 = D0
 MFRC522 mfrc522(RFID_CS_PIN, RST_PIN); // Create MFRC522 instance
 
 //Initilialize RFID module.
 void Rfid_Init(void (*callback)(String, String, String, String)) {
+  Config_SelectRFID();  // Select RFID on SPI bus
+  
   mfrc522.PCD_Init();		// Init MFRC522
   delay(500);				// Optional delay. Some board do need more time after init to be ready, see Readme
 
@@ -42,6 +44,8 @@ void Rfid_Init(void (*callback)(String, String, String, String)) {
 
 //Called in loop to listen.
 void Rfid_Listen(bool (*callback)(String)) {
+  Config_SelectRFID();  // Select RFID before reading
+  
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
 	if ( ! mfrc522.PICC_IsNewCardPresent()) {
     callback("null");
@@ -61,5 +65,6 @@ void Rfid_Listen(bool (*callback)(String)) {
   // DEBUG: Dump debug info about the card; PICC_HaltA() is automatically called
 	//mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
 
+  Config_DeselectAll();  // Deselect all after reading
   callback( str );
 }

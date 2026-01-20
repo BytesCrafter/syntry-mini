@@ -2,7 +2,8 @@
 //Your Domain name with URL path or IP address with path
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
-#define APP_VERSION "1.2.0" 
+#define APP_VERSION "1.4.0" 
+#define BUILD_DATE "2026-01-20"
 
 #define BAUD_RATE 9600 
 
@@ -18,6 +19,12 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 #define SDCARD_CS_PIN 2 // D4 - 
 
 bool isLoaded = false;
+
+// Hardware initialization status
+bool sdCardStatus = false;
+bool rfidStatus = false;
+bool displayStatus = false;
+bool wifiStatus = false;
 
 String rfidMode = "access"; //default mode.
 String Rfid_Status() {

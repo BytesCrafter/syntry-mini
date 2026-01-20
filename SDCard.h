@@ -11,6 +11,7 @@ void SDCard_Init(void (*callback)(String, String, String, String)) {
   } else {
     callback(" Syntry Mini v1", "> SDC Loaded...", "", "");
     Serial.println("SDCard initialization done.");
+    sdCardStatus = true;
   }
 }
 

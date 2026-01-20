@@ -89,6 +89,7 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
   ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
+  ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
   ptr +="<form action='/' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
   ptr +=Helper_HttpFooter();
@@ -149,6 +150,71 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
   ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
   ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
   ptr +="<input type='submit' value='CONNECT'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
+String Helper_Hotspot_SystemInfo() {
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>System Info</h1><h5>ESP8266 Statistics</h5>";
+  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057'>";
+  
+  // Firmware Version
+  ptr +="<b>Firmware:</b><br>";
+  ptr +="Version: " + String(APP_VERSION) + "<br>";
+  ptr +="Build: " + String(__DATE__) + " " + String(__TIME__) + "<br><br>";
+  
+  // Hardware Status
+  ptr +="<b>Hardware Status:</b><br>";
+  ptr +="RFID Reader: <span style='color:" + String(rfidStatus ? "#28a745" : "#dc3545") + "'>"
+       + String(rfidStatus ? "✓ OK" : "✗ Error") + "</span><br>";
+  ptr +="SD Card: <span style='color:" + String(sdCardStatus ? "#28a745" : "#dc3545") + "'>"
+       + String(sdCardStatus ? "✓ OK" : "✗ Error") + "</span><br>";
+  ptr +="LCD Display: <span style='color:" + String(displayStatus ? "#28a745" : "#dc3545") + "'>"
+       + String(displayStatus ? "✓ OK" : "✗ Error") + "</span><br>";
+  ptr +="WiFi Module: <span style='color:" + String(wifiStatus ? "#28a745" : "#dc3545") + "'>"
+       + String(wifiStatus ? "✓ OK" : "✗ Error") + "</span><br><br>";
+  
+  // Flash Memory Info
+  uint32_t flashSize = ESP.getFlashChipSize();
+  uint32_t sketchSize = ESP.getSketchSize();
+  uint32_t freeSpace = ESP.getFreeSketchSpace();
+  float flashUsage = (sketchSize * 100.0) / flashSize;
+  
+  ptr +="<b>Flash Memory:</b><br>";
+  ptr +="Total: " + String(flashSize / 1024) + " KB<br>";
+  ptr +="Used: " + String(sketchSize / 1024) + " KB<br>";
+  ptr +="Free: " + String(freeSpace / 1024) + " KB<br>";
+  ptr +="Usage: " + String(flashUsage, 1) + "%<br><br>";
+  
+  // Heap Memory
+  ptr +="<b>Heap Memory:</b><br>";
+  ptr +="Free: " + String(ESP.getFreeHeap() / 1024) + " KB<br><br>";
+  
+  // System Info
+  ptr +="<b>System:</b><br>";
+  ptr +="Chip ID: " + String(ESP.getChipId(), HEX) + "<br>";
+  ptr +="CPU Freq: " + String(ESP.getCpuFreqMHz()) + " MHz<br>";
+  ptr +="SDK: " + String(ESP.getSdkVersion()) + "<br><br>";
+  
+  // WiFi Info
+  ptr +="<b>WiFi:</b><br>";
+  ptr +="Mode: " + String(WiFi.getMode() == WIFI_AP ? "AP" : "STA") + "<br>";
+  if(WiFi.getMode() == WIFI_AP) {
+    // Read hostname directly from SD card
+    String hostname = "";
+    File hostFile = SD.open("settings/hostname");
+    if(hostFile) {
+      hostname = hostFile.readString();
+      hostFile.close();
+    }
+    ptr +="SSID: Syntry Mini";
+    if(hostname != "") ptr +=" - " + hostname;
+    ptr +="<br>IP: 192.168.4.1<br>";
+  }
+  
+  ptr +="</div>";
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();
   return ptr;

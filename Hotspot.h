@@ -202,11 +202,16 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_To_Verify());
   });
 
+  webServer.on("/system", []() {
+    webServer.send(200, "text/html", Helper_Hotspot_SystemInfo());
+  });
+
   // replay to all requests with same HTML
   webServer.onNotFound([]() {
     webServer.send(200, "text/html", Helper_Hotspot_Login());
   });
   webServer.begin();
+  wifiStatus = true;
 
   Display_Show(" Syntry Mini v1", "> WIFI Loaded...");
 }

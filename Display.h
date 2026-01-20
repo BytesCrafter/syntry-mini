@@ -46,8 +46,26 @@ void Display_Detect() {
 
 //Required to initialize the display.
 void Display_Init() {
-  lcd.init(); //initialize LCD
-  lcd.backlight(); //turn on LCD backlight     
+  // Test I2C communication before initializing
+  Wire.beginTransmission(0x27);
+  byte error = Wire.endTransmission();
+  
+  if (error == 0) {
+    // LCD found at address 0x27
+    lcd.init(); //initialize LCD
+    lcd.backlight(); //turn on LCD backlight
+    
+    // Try to print test to verify LCD is working
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("LCD Testing...");
+    delay(100);
+    
+    displayStatus = true;
+    Serial.println("LCD Display: OK");
+  } else {
+    Serial.println("LCD Error at 0x27");
+  }
 }
 
 //Clear all Display rows.

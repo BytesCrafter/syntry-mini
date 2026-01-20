@@ -95,6 +95,7 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
   ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
+  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users' style='background:#8e44ad'></form>";
   ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
   ptr +="<form action='/change-hostname' method='get'><input type='submit' value='Change Hostname'></form>";
@@ -178,6 +179,61 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
   ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
   ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
   ptr +="<input type='submit' value='CONNECT'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
+String Helper_Hotspot_ManageUsers(String message = "") {
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Manage Users</h1><h5>Registered RFID Cards</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  
+  // Read all user files from SD card
+  Config_SelectSDCard();
+  File usersDir = SD.open("/users");
+  
+  if(usersDir && usersDir.isDirectory()) {
+    ptr +="<div style='text-align:left;font-size:13px;line-height:1.8'>";
+    
+    int userCount = 0;
+    File entry = usersDir.openNextFile();
+    
+    while(entry) {
+      if(!entry.isDirectory()) {
+        String fileName = String(entry.name());
+        // Remove path prefix if present
+        int lastSlash = fileName.lastIndexOf('/');
+        if(lastSlash >= 0) {
+          fileName = fileName.substring(lastSlash + 1);
+        }
+        
+        if(fileName != "admin" && fileName.length() > 0) {
+          ptr +="<div style='display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e9ecef'>";
+          ptr +="<span style='font-weight:500;color:#495057'>"+fileName+"</span>";
+          ptr +="<form action='/delete-user' method='get' style='margin:0'>";
+          ptr +="<input type='hidden' name='uid' value='"+fileName+"'>";
+          ptr +="<input type='submit' value='Delete' style='padding:6px 12px;font-size:12px;background:#dc3545;width:auto;margin:0'>";
+          ptr +="</form></div>";
+          userCount++;
+        }
+      }
+      entry.close();
+      entry = usersDir.openNextFile();
+    }
+    
+    if(userCount == 0) {
+      ptr +="<p style='text-align:center;color:#6c757d;padding:20px'>No users registered</p>";
+    }
+    
+    ptr +="</div>";
+    usersDir.close();
+  } else {
+    ptr +="<p style='text-align:center;color:#dc3545'>Error reading users directory</p>";
+  }
+  
+  Config_DeselectAll();
+  
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();
   return ptr;

@@ -70,6 +70,35 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_ChangeHostname(status));
   });
 
+  webServer.on("/manage-users", []() {
+    String status = webServer.arg("status");
+    webServer.send(200, "text/html", Helper_Hotspot_ManageUsers(status));
+  });
+
+  webServer.on("/delete-user", []() {
+    String uid = webServer.arg("uid");
+
+    if(uid.length() > 0) {
+      Config_SelectSDCard();
+      String filepath = "users/" + uid;
+      bool removed = SD.remove(filepath);
+      Config_DeselectAll();
+      
+      if(removed) {
+        Display_Show(String(" ") + APP_NAME, "USER DELETED");
+        Buzzer_Play(1, 900, 500);
+        Serial.println("User deleted via web: " + uid);
+        
+        webServer.sendHeader("Location", String("/manage-users?status=User%20deleted!"), true);
+        webServer.send(302, "text/plain", "");
+        return;
+      }
+    }
+
+    webServer.sendHeader("Location", String("/manage-users?status=Failed%20to%20delete%20user!"), true);
+    webServer.send(302, "text/plain", "");
+  });
+
   webServer.on("/update-password", []() {
     String newpass = webServer.arg("newpass");
     String confirmpass = webServer.arg("confirmpass");

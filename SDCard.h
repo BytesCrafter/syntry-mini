@@ -55,3 +55,24 @@ void SDCard_Save(String filename, String data, bool newLine = true) {
   
   Config_DeselectAll();  // Deselect after operation
 }
+
+int SDCard_CountUsers() {
+  int count = 0;
+  Config_SelectSDCard();  // Select SD Card
+  
+  File usersDir = SD.open("/users");
+  if (usersDir) {
+    File entry = usersDir.openNextFile();
+    while (entry) {
+      if (!entry.isDirectory()) {
+        count++;
+      }
+      entry.close();
+      entry = usersDir.openNextFile();
+    }
+    usersDir.close();
+  }
+  
+  Config_DeselectAll();  // Deselect after operation
+  return count;
+}

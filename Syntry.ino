@@ -88,12 +88,12 @@
 
 //CUSTOM
 #include "Config.h"
-#include "Helper.h"
 
 //INPUT
-#include "Rfid.h"
 #include "SDCard.h"
 #include "Clock.h"
+#include "Helper.h"
+#include "Rfid.h"
 
 //OUTPUT
 #include "Display.h"

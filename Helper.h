@@ -95,11 +95,12 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
   ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
-  ptr +="<form action='/boot-logs' method='get'><input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
-  ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
   ptr +="<form action='/change-hostname' method='get'><input type='submit' value='Change Hostname'></form>";
-  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users' style='background:#8e44ad'></form>";
+  ptr +="<form action='/boot-logs' method='get'><input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
+  ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup' style='background:#3498db'></form>";
+  int userCount = SDCard_CountUsers();
+  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users (" + String(userCount) + ")' style='background:#8e44ad'></form>";
   ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="</div>";
   ptr +="<div class='split'>";

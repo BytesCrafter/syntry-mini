@@ -1,4 +1,44 @@
-/* ESP 8266 DIAGRAM https://lastminuteengineers.com/wp-content/uploads/iot/ESP8266-Pinout-NodeMCU.png */
+/*
+  Syntry Mini v1 - RFID Access Control System
+  
+  REQUIRED LIBRARIES (Install via Arduino Library Manager or GitHub):
+  ==================================================================
+  1. MFRC522 (RFID Reader)
+     GitHub: https://github.com/miguelbalboa/rfid
+     Library Manager: "MFRC522 by GithubCommunity"
+  
+  2. LiquidCrystal_I2C (LCD Display)
+     GitHub: https://github.com/johnrickman/LiquidCrystal_I2C
+     Library Manager: "LiquidCrystal I2C by Frank de Brabander"
+  
+  3. NTPClient (Network Time Protocol)
+     GitHub: https://github.com/arduino-libraries/NTPClient
+     Library Manager: "NTPClient by Fabrice Weinberg"
+  
+  4. RTC (Real Time Clock) - Optional
+     GitHub: https://github.com/Makuna/Rtc/wiki
+     Library Manager: "Rtc by Makuna"
+  
+  5. Adafruit Sensor (Sensor Abstraction) - Optional
+     GitHub: https://github.com/adafruit/Adafruit_Sensor
+     Library Manager: "Adafruit Unified Sensor"
+  
+  BUILT-IN LIBRARIES (Included with ESP8266 Core):
+  - ESP8266WiFi
+  - ESP8266WebServer
+  - DNSServer
+  - SPI, Wire, SD, EEPROM
+  
+  ESP8266 BOARD SETUP:
+  ==================================================================
+  Arduino IDE > File > Preferences > Additional Board Manager URLs:
+  http://arduino.esp8266.com/stable/package_esp8266com_index.json
+  
+  Then: Tools > Board > Boards Manager > Search "ESP8266" > Install
+  Select: Tools > Board > NodeMCU 1.0 (ESP-12E Module)
+
+  ESP 8266 DIAGRAM https://lastminuteengineers.com/wp-content/uploads/iot/ESP8266-Pinout-NodeMCU.png
+*/
 
 /* wiring the MFRC522 to ESP8266 (042125) https://randomnerdtutorials.com/esp8266-nodemcu-mfrc522-rfid-reader-arduino/
   RST     = GPIO16   =  D0

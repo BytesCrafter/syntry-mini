@@ -1,3 +1,7 @@
+/*
+  Module: Helper Script.
+  Version: 0.1.0
+*/
 
 String Helper_RandomString() {
   const int len = 10;
@@ -11,25 +15,6 @@ String Helper_RandomString() {
   }
 
   return String(notes);
-}
-
-String Helper_HttpHeader() {
-  String ptr = "<!DOCTYPE html> <html>\n";
-  ptr +="<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
-  ptr +="<title>Syntry Mini v1</title>\n";
-  ptr +="<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
-  ptr +="body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 50px;}\n";
-  ptr +=".button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 4px;}\n";
-  ptr +=".button-on {background-color: #3498db;}\n";
-  ptr +=".button-on:active {background-color: #3498db;}\n";
-  ptr +=".button-off {background-color: #34495e;}\n";
-  ptr +=".button-off:active {background-color: #2c3e50;}\n";
-  ptr +="p {font-size: 14px;color: #888;margin-bottom: 10px;}\n";
-  ptr +="input{ margin-bottom: 30px; padding: 10px;} form{ margin-top: 50px; }\n";
-  ptr +="</style>\n";
-  ptr +="</head>\n";
-  ptr +="<body>\n";
-  return ptr;
 }
 
 char* Helper_StringToChars(String str) {
@@ -56,170 +41,115 @@ void Helper_array_to_string(byte array[], unsigned int len, char buffer[]) {
    buffer[len*2] = '\0';
 }
 
+String Helper_HttpHeader() {
+  String ptr = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">";
+  ptr +="<title>Syntry</title><style>";
+  ptr +="*{margin:0;padding:0;box-sizing:border-box}";
+  ptr +="body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#1ab394 0%,#26d0b0 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}";
+  ptr +=".c{background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.15);padding:40px;max-width:400px;width:100%}";
+  ptr +="h1{color:#1a1a1a;font-size:28px;margin-bottom:8px;text-align:center;font-weight:700}";
+  ptr +="h5{color:#6c757d;font-size:14px;margin-bottom:30px;text-align:center;font-weight:400}";
+  ptr +="h6{color:#dc3545;font-size:13px;margin-bottom:15px;text-align:center}";
+  ptr +="input[type=text],input[type=password]{width:100%;padding:14px;border:2px solid #e9ecef;border-radius:12px;font-size:15px;margin-bottom:16px;transition:.3s;background:#f8f9fa}";
+  ptr +="input:focus{outline:none;border-color:#1ab394;background:#fff}";
+  ptr +="input[type=submit]{width:100%;padding:16px;background:#1ab394;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:.3s;margin-bottom:12px;box-shadow:0 4px 15px rgba(26,179,148,.3)}";
+  ptr +="input[type=submit]:hover{background:#17a085;transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,179,148,.4)}";
+  ptr +="input[type=submit]:active{transform:translateY(0)}";
+  ptr +="</style></head><body><div class=\"c\">";
+  return ptr;
+}
+
+String Helper_HttpFooter() {
+  String ptr = "</div></body></html>";
+  return ptr;
+}
+
+String Helper_HttpBackToMenu() {
+  String ptr = "<form action='/menu' method='get'><input type='submit' value='Back to Menu'></form>";
+  return ptr;
+}
+
 String Helper_Hotspot_Login() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-  
-  ptr +="<form action='/login' method='get'>\n";
-    ptr +="<div><input type='text' name='uname' placeholder='Username'></div>\n";
-    ptr +="<div><input type='password' name='pword' placeholder='Password'></div>\n";
-    ptr +="<input type='submit' value='AUTHENTICATE'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Syntry Mini v1</h1><h5>Powered by ERPat System</h5>";
+  ptr +="<form action='/login' method='get'>";
+  ptr +="<input type='text' name='uname' placeholder='Username' required>";
+  ptr +="<input type='password' name='pword' placeholder='Password' required>";
+  ptr +="<input type='submit' value='LOGIN'>";
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Menu() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-
-  ptr +="<form action='/verify' method='get'>\n";
-    ptr +="<input type='submit' value='Verify Mode'>\n";
-  ptr +="</form>\n\n";
-  
-  ptr +="<form action='/access' method='get'>\n";
-    ptr +="<input type='submit' value='Access Mode'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/add' method='get'>\n";
-    ptr +="<input type='submit' value='Add Mode'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/remove' method='get'>\n";
-    ptr +="<input type='submit' value='Remove Mode'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/wifi-connect' method='get'>\n";
-    ptr +="<input type='submit' value='Wifi Connect'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/change-password' method='get'>\n";
-    ptr +="<input type='submit' value='Change Password'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<div><input type='hidden' name='action' value='restart'></div>\n";
-    ptr +="<input type='submit' value='Restart Device'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/' method='get'>\n";
-    ptr +="<input type='submit' value='Logout'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Syntry Mini v1</h1><h5>Control Panel</h5>";
+  ptr +="<form action='/verify' method='get'><input type='submit' value='Verify Mode'></form>";
+  ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
+  ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
+  ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
+  ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
+  ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
+  ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
+  ptr +="<form action='/' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Access() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-
-  ptr +="<form action='/access' method='get'>\n";
-    ptr +="<div><input type='hidden' name='action' value='override'></div>\n";
-    ptr +="<input type='submit' value='Override Access'>\n";
-  ptr +="</form>\n\n";
-  
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Access Mode</h1><h5>Tap your RFID card</h5>";
+  ptr +="<form action='/access' method='get'><input type='hidden' name='action' value='override'><input type='submit' value='Override Access' style='background:#48bb78'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Add() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-  
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Add Card Mode</h1><h5>Tap card to register</h5>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Remove() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-  
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Remove Card Mode</h1><h5>Tap card to delete</h5>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Verify() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-  
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Verify Mode</h1><h5>Tap card to check</h5>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_ChangePassword(String message = "") {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-
-  if(message != "") {
-    ptr +="<h6>"+message+"</h6>\n";
-  }
-  
-  ptr +="<form action='/update-password' method='get'>\n";
-    ptr +="<div><input type='password' name='newpass' placeholder='New Password'></div>\n";
-    ptr +="<div><input type='password' name='confirmpass' placeholder='Confirm Password'></div>\n";
-    ptr +="<input type='submit' value='UPDATE PASSWORD'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>Change Password</h1><h5>Update admin credentials</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  ptr +="<form action='/update-password' method='get'>";
+  ptr +="<input type='password' name='newpass' placeholder='New Password' required>";
+  ptr +="<input type='password' name='confirmpass' placeholder='Confirm Password' required>";
+  ptr +="<input type='submit' value='UPDATE'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_ConnectWifi(String message = "") {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1>\n";
-  ptr +="<h5>Powered by BytesCarfter</h5>\n";
-
-  if(message != "") {
-    ptr +="<h6>"+message+"</h6>\n";
-  }
-  
-  ptr +="<form action='/save-wifi' method='get'>\n";
-    ptr +="<div><input type='text' name='wifiname' placeholder='Wifi Name'></div>\n";
-    ptr +="<div><input type='password' name='wifipass' placeholder='Wifi Pass'></div>\n";
-    ptr +="<input type='submit' value='Save & Connect'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="<form action='/menu' method='get'>\n";
-    ptr +="<input type='submit' value='Back to Menu'>\n";
-  ptr +="</form>\n\n";
-
-  ptr +="</body>\n";
-  ptr +="</html>\n";
+  ptr +="<h1>WiFi Setup</h1><h5>Connect to network</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  ptr +="<form action='/save-wifi' method='get'>";
+  ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
+  ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
+  ptr +="<input type='submit' value='CONNECT'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
   return ptr;
 }

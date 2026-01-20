@@ -12,12 +12,12 @@ void SDCard_Init(void (*callback)(String, String, String, String)) {
   delay(50);  // Allow power stabilization
   
   if (!SD.begin(SDCARD_CS_PIN)) {
-    callback(" Syntry Mini v1", "> SDC Error...", "", "");
+    callback(String(" ") + APP_NAME, "> SDC Error...", "", "");
     Serial.println("SDCard initialization failed!");
     Serial.println("Check: 1) Card inserted 2) Wiring 3) Card format (FAT32)");
     sdCardStatus = false;
   } else {
-    callback(" Syntry Mini v1", "> SDC Loaded...", "", "");
+    callback(String(" ") + APP_NAME, "> SDC Loaded...", "", "");
     Serial.println("SDCard initialization done.");
     
     // Verify card is working by attempting to open root directory

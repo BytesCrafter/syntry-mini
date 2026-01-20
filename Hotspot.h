@@ -14,23 +14,11 @@ ESP8266WebServer webServer(80);
 unsigned long startTime;
 unsigned long expireTime = 300000; //5min
 
-String Hotspot_Hostname() {
-  String filepath = "settings/hostname";
-  File curHost = SD.open(filepath);
-
-  if (curHost) {
-    return curHost.readString();
-    curHost.close();
-  } else {
-    return Helper_RandomString();
-  }
-}
-
 void Hotspot_broadcast() {
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  String preName = "Syntry Mini - ";
-  String postName = Hotspot_Hostname();
+  String preName = String(APP_NAME) + " - ";
+  String postName = Config_LoadHostname();
   String allName = preName+postName;
   WiFi.softAP(allName);
 
@@ -52,14 +40,14 @@ void Hotspot_broadcast() {
 
     if(isAuth) {
       webServer.sendHeader("Location", String("/menu"), true);
-      Display_Show(" Syntry Mini v1", "WELCOME! ADMIN");
+      Display_Show(String(" ") + APP_NAME, "WELCOME! ADMIN");
       Buzzer_Play(1, 1000, 50); delay(1000);
-      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+      Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
     } else {
       webServer.sendHeader("Location", String("/?status=Invalid%20username%20or%20password!"), true);
-      Display_Show(" Syntry Mini v1", "REPORTING STOP!");
+      Display_Show(String(" ") + APP_NAME, "REPORTING STOP!");
       Buzzer_Play(1, 250, 50); delay(1000);
-      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+      Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
     }
     webServer.send ( 302, "text/plain", "");
   });
@@ -77,6 +65,11 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_ChangePassword(status));
   });
 
+  webServer.on("/change-hostname", []() {
+    String status = webServer.arg("status");
+    webServer.send(200, "text/html", Helper_Hotspot_ChangeHostname(status));
+  });
+
   webServer.on("/update-password", []() {
     String newpass = webServer.arg("newpass");
     String confirmpass = webServer.arg("confirmpass");
@@ -84,7 +77,7 @@ void Hotspot_broadcast() {
     if(newpass == confirmpass && newpass.length() > 0) {
       // Save password to EEPROM
       if(Config_SavePassword(confirmpass)) {
-        Display_Show(" Syntry Mini v1", "PASSWORD UPDATED");
+        Display_Show(String(" ") + APP_NAME, "PASSWORD UPDATED");
         Buzzer_Play(1, 900, 1000);
 
         webServer.sendHeader("Location", String("/change-password?status=Updated%20your%20Password!"), true);
@@ -94,6 +87,25 @@ void Hotspot_broadcast() {
     }
 
     webServer.sendHeader("Location", String("/change-password?status=Something%20not%20right!"), true);
+    webServer.send ( 302, "text/plain", "");
+  });
+
+  webServer.on("/update-hostname", []() {
+    String newhostname = webServer.arg("newhostname");
+
+    if(newhostname.length() > 0 && newhostname.length() <= 20) {
+      // Save hostname to EEPROM
+      if(Config_SaveHostname(newhostname)) {
+        Display_Show(String(" ") + APP_NAME, "HOSTNAME UPDATED");
+        Buzzer_Play(1, 900, 1000);
+
+        webServer.sendHeader("Location", String("/change-hostname?status=Updated%20hostname!%20Restart%20to%20apply."), true);
+        webServer.send ( 302, "text/plain", "");
+        return;
+      }
+    }
+
+    webServer.sendHeader("Location", String("/change-hostname?status=Something%20not%20right!"), true);
     webServer.send ( 302, "text/plain", "");
   });
 
@@ -126,10 +138,10 @@ void Hotspot_broadcast() {
         wifiCon.close();
       }
 
-      Display_Show(" Syntry Mini v1", "Saved WIFI Creds");
+      Display_Show(String(" ") + APP_NAME, "Saved WIFI Creds");
       Buzzer_Play(1, 900, 500);
 
-      Display_Show(" Syntry Mini v1", "Wifi Connecting.");
+      Display_Show(String(" ") + APP_NAME, "Wifi Connecting.");
       Buzzer_Play(1, 900, 500);
 
       WifiClient_connect(wifiname, wifipass);
@@ -150,13 +162,13 @@ void Hotspot_broadcast() {
     if(action == "override") {
       //TODO: Save log to SDCard
       //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
-      Display_Show(" Syntry Mini v1", "ACCESS OVERRIDE");
+      Display_Show(String(" ") + APP_NAME, "ACCESS OVERRIDE");
       Buzzer_Play(1, 900, 50);
       Relay_Open();
 
-      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+      Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
     } else {
-      Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+      Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
       rfidMode = "access";
       Buzzer_Play(1, 700, 50);
     }
@@ -165,7 +177,7 @@ void Hotspot_broadcast() {
 
   webServer.on("/add", []() {
     startTime = millis();
-    Display_Show(" Syntry Mini v1", ">TAP TO REGISTER");
+    Display_Show(String(" ") + APP_NAME, ">TAP TO REGISTER");
     rfidMode = "add";
     Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Add());
@@ -173,7 +185,7 @@ void Hotspot_broadcast() {
 
   webServer.on("/remove", []() {
     startTime = millis();
-    Display_Show(" Syntry Mini v1", ">TAP TO REMOVE");
+    Display_Show(String(" ") + APP_NAME, ">TAP TO REMOVE");
     rfidMode = "remove";
     Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Remove());
@@ -181,7 +193,7 @@ void Hotspot_broadcast() {
 
   webServer.on("/verify", []() {
     startTime = millis();
-    Display_Show(" Syntry Mini v1", ">TAP TO VERIFY");
+    Display_Show(String(" ") + APP_NAME, ">TAP TO VERIFY");
     rfidMode = "verify";
     Buzzer_Play(1, 700, 50);
     webServer.send(200, "text/html", Helper_Hotspot_To_Verify());
@@ -199,7 +211,7 @@ void Hotspot_broadcast() {
   webServer.begin();
   wifiStatus = true;
 
-  Display_Show(" Syntry Mini v1", "> WIFI Loaded...");
+  Display_Show(String(" ") + APP_NAME, "> WIFI Loaded...");
 }
 
 void Hotspot_loop() {
@@ -207,7 +219,7 @@ void Hotspot_loop() {
   webServer.handleClient();
 
   if(rfidMode != "access" && millis() - startTime > expireTime) {
-    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
     rfidMode = "access";
     Buzzer_Play(1, 700, 50);
   }

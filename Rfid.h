@@ -31,11 +31,11 @@ void Rfid_Init(void (*callback)(String, String, String, String)) {
   Serial.print(F("Result: "));
   if (result) {
     Serial.println(F("OK"));
-    callback(" Syntry Mini v1", "> RFID Loaded...", "", "");
+    callback(String(" ") + APP_NAME, "> RFID Loaded...", "", "");
     rfidStatus = true;
   } else {
     Serial.println(F("DEFECT or UNKNOWN"));
-    callback(" Syntry Mini v1", "> RFID Error...", "", "");
+    callback(String(" ") + APP_NAME, "> RFID Error...", "", "");
   }
   Serial.println();
   

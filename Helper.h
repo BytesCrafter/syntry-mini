@@ -77,7 +77,7 @@ String Helper_HttpBackToMenu() {
 
 String Helper_Hotspot_Login(String message = "") {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1><h5>Powered by ERPat System</h5>";
+  ptr += String("<h1>") + APP_NAME + "</h1><h5>Powered by ERPat System</h5>";
   if(message != "") ptr +="<h6>"+message+"</h6>";
   ptr +="<form action='/login' method='get'>";
   ptr +="<input type='text' name='uname' placeholder='Username' required>";
@@ -89,7 +89,7 @@ String Helper_Hotspot_Login(String message = "") {
 
 String Helper_Hotspot_To_Menu() {
   String ptr = Helper_HttpHeader();
-  ptr +="<h1>Syntry Mini v1</h1><h5>Control Panel</h5>";
+  ptr += String("<h1>") + APP_NAME + "</h1><h5>Control Panel</h5>";
   ptr +="<div class='grid'>";
   ptr +="<form action='/verify' method='get'><input type='submit' value='Verify Mode'></form>";
   ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
@@ -97,8 +97,9 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
   ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
-  ptr +="</div>";
+  ptr +="<form action='/change-hostname' method='get'><input type='submit' value='Change Hostname'></form>";
   ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
+  ptr +="</div>";
   ptr +="<div class='split'>";
   ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
   ptr +="<form action='/' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
@@ -153,6 +154,22 @@ String Helper_Hotspot_ChangePassword(String message = "") {
   return ptr;
 }
 
+String Helper_Hotspot_ChangeHostname(String message = "") {
+  // Get current hostname from EEPROM
+  String currentHostname = Config_LoadHostname();
+  
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Change Hostname</h1><h5>Update device name</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  if(currentHostname != "") ptr +="<p style='text-align:center;color:#6c757d;margin-bottom:15px'>Current: <b>"+currentHostname+"</b></p>";
+  ptr +="<form action='/update-hostname' method='get'>";
+  ptr +="<input type='text' name='newhostname' placeholder='New Hostname' required maxlength='20'>";
+  ptr +="<input type='submit' value='UPDATE'></form>";
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
 String Helper_Hotspot_ConnectWifi(String message = "") {
   String ptr = Helper_HttpHeader();
   ptr +="<h1>WiFi Setup</h1><h5>Connect to network</h5>";
@@ -167,9 +184,17 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
 }
 
 String Helper_Hotspot_SystemInfo() {
+  // Get device name from EEPROM
+  String deviceName = Config_LoadHostname();
+  if(deviceName == "") deviceName = "Not Set";
+  
   String ptr = Helper_HttpHeader();
   ptr +="<h1>System Info</h1><h5>ESP8266 Statistics</h5>";
-  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057'>";
+  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057'>";  
+  
+  // Device Name
+  ptr +="<b>Device Name:</b><br>";
+  ptr += deviceName + "<br><br>";
   
   // Firmware Version
   ptr +="<b>Firmware:</b><br>";
@@ -213,14 +238,9 @@ String Helper_Hotspot_SystemInfo() {
   ptr +="<b>WiFi:</b><br>";
   ptr +="Mode: " + String(WiFi.getMode() == WIFI_AP ? "AP" : "STA") + "<br>";
   if(WiFi.getMode() == WIFI_AP) {
-    // Read hostname directly from SD card
-    String hostname = "";
-    File hostFile = SD.open("settings/hostname");
-    if(hostFile) {
-      hostname = hostFile.readString();
-      hostFile.close();
-    }
-    ptr +="SSID: Syntry Mini";
+    // Read hostname from EEPROM
+    String hostname = Config_LoadHostname();
+    ptr += String("SSID: ") + APP_NAME;
     if(hostname != "") ptr +=" - " + hostname;
     ptr +="<br>IP: 192.168.4.1<br>";
   }

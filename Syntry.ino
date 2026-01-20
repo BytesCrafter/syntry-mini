@@ -1,5 +1,5 @@
 /*
-  Syntry Mini v1 - RFID Access Control System
+  Syntry Access - RFID Access Control System
   
   REQUIRED LIBRARIES (Install via Arduino Library Manager or GitHub):
   ==================================================================
@@ -113,16 +113,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 #include "Hotspot.h"
 
 bool access(String uid) {
-  if(uid == Hotspot_Hostname()) {
-    // Reset admin password to default
-    Config_SavePassword("admin");
-    Display_Show(" Syntry Mini v1", "RESET ADMIN PASS");
-    Buzzer_Play(1, 1000, 100); delay(1000);
-    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
-    return true;
-  }
-
-  Display_Show(" Syntry Mini v1", " AUTHENTICATING");
+  Display_Show(String(" ") + APP_NAME, " AUTHENTICATING");
   Buzzer_Play(1, 700, 50);
   Serial.println("UID: " + uid);
 
@@ -132,30 +123,30 @@ bool access(String uid) {
 
   if (!accessFile) {
     Config_DeselectAll();  // Clean up SPI bus
-    Display_Show(" Syntry Mini v1", " ACCESS  DENIED");
+    Display_Show(String(" ") + APP_NAME, " ACCESS  DENIED");
     Buzzer_Play(1, 400, 50);
     Serial.println("Access denied: User not found");
     delay(500);
 
-    Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+    Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
   } else {
     accessFile.close();
     Config_DeselectAll();  // Clean up SPI bus
     
     //String curTime = String(timeClient.getFormattedTime());
-    //Display_Show(" Syntry Mini v1", " TIME: "+curTime);
+    //Display_Show(" " + APP_NAME, " TIME: "+curTime);
     
     Serial.println("Access granted: " + uid);
     //TODO: Save log to SDCard
     //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
 
-    Display_Show(" Syntry Mini v1", " ACCESS GRANTED");
+    Display_Show(String(" ") + APP_NAME, " ACCESS GRANTED");
     Buzzer_Play(1, 900, 50); 
 
     Relay_Open();
   }
 
-  Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+  Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
   return true;
 }
 
@@ -170,13 +161,13 @@ bool add(String uid) {
     addFile.close();
     Config_DeselectAll();
     Serial.println("User added: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: SAVED!");
+    Display_Show(String(" ") + APP_NAME, " LOG: SAVED!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
     Config_DeselectAll();
     Serial.println("Failed to add user: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: FAILED!");
+    Display_Show(String(" ") + APP_NAME, " LOG: FAILED!");
     Buzzer_Play(1, 300, 50); delay(1000);
     return false;
   }
@@ -191,12 +182,12 @@ bool remove(String uid) {
 
   if (!exists && removed) {
     Serial.println("User removed: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: DELETED!");
+    Display_Show(String(" ") + APP_NAME, " LOG: DELETED!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
     Serial.println("Failed to remove user: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: FAILED!");
+    Display_Show(String(" ") + APP_NAME, " LOG: FAILED!");
     Buzzer_Play(1, 300, 50); delay(1000);
     return false;
   }
@@ -211,13 +202,13 @@ bool verify(String uid) {
     verifyFile.close();
     Config_DeselectAll();
     Serial.println("User exists: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: EXISTING!");
+    Display_Show(String(" ") + APP_NAME, " LOG: EXISTING!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
     Config_DeselectAll();
     Serial.println("User not found: " + uid);
-    Display_Show(" Syntry Mini v1", " LOG: NOT FOUND!");
+    Display_Show(String(" ") + APP_NAME, " LOG: NOT FOUND!");
     Buzzer_Play(1, 300, 50); delay(1000);
     return false;
   }
@@ -235,13 +226,13 @@ bool sethostname(String uid) {
     pwFile.close();
     Config_DeselectAll();
     Serial.println("Hostname set: " + uid);
-    Display_Show(" Syntry Mini v1", ">SET ADMIN: YES!");
+    Display_Show(String(" ") + APP_NAME, ">SET ADMIN: YES!");
     Buzzer_Play(1, 900, 100); delay(500);
     return true;
   } else {
     Config_DeselectAll();
     Serial.println("Failed to set hostname");
-    Display_Show(" Syntry Mini v1", ">SET ADMIN: NO!");
+    Display_Show(String(" ") + APP_NAME, ">SET ADMIN: NO!");
     Buzzer_Play(1, 300, 100); delay(500);
     return false;
   }
@@ -306,7 +297,7 @@ void setup() {
   Buzzer_Play(1, 500, 200);
 
   Display_Init();
-  Display_Show(" Syntry Mini v1", "by BytesCrafter");
+  Display_Show(String(" ") + APP_NAME, "by BytesCrafter");
   Buzzer_Play(1, 200, 1000);
 
   SDCard_Init(&Display_Show);
@@ -318,7 +309,7 @@ void setup() {
   Hotspot_broadcast();
   Buzzer_Play(1, 200, 2500);
   
-  Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
+  Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");
   Buzzer_Play(2, 100, 100);
 
   isLoaded = true;

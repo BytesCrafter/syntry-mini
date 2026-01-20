@@ -2,6 +2,7 @@
 //Your Domain name with URL path or IP address with path
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
+#define APP_NAME "Syntry Access"
 #define APP_VERSION "1.4.0" 
 #define BUILD_DATE "2026-01-20"
 
@@ -36,6 +37,10 @@ String Rfid_Status() {
 #define EEPROM_SIZE 512
 #define EEPROM_PASS_ADDR 0
 #define EEPROM_PASS_MAX_LEN 32
+
+// EEPROM Hostname Management (stored after password)
+#define EEPROM_HOST_ADDR 34
+#define EEPROM_HOST_MAX_LEN 20
 
 void Config_Init() {
   EEPROM.begin(EEPROM_SIZE);
@@ -106,6 +111,48 @@ String Config_LoadPassword() {
   
   Serial.println("Password loaded from EEPROM");
   return password;
+}
+
+// Save hostname to EEPROM
+bool Config_SaveHostname(String hostname) {
+  if(hostname.length() > EEPROM_HOST_MAX_LEN) {
+    return false;
+  }
+  
+  // Write hostname length
+  EEPROM.write(EEPROM_HOST_ADDR, hostname.length());
+  
+  // Write hostname string
+  for(int i = 0; i < hostname.length(); i++) {
+    EEPROM.write(EEPROM_HOST_ADDR + 1 + i, hostname[i]);
+  }
+  
+  EEPROM.commit();
+  Serial.println("Hostname saved to EEPROM");
+  return true;
+}
+
+// Get or generate hostname (accessible from Config.h)
+// Forward declaration for Helper_RandomString (defined in Helper.h)
+String Helper_RandomString();
+
+// Load hostname from EEPROM
+String Config_LoadHostname() {
+  int len = EEPROM.read(EEPROM_HOST_ADDR);
+  
+  // If length is 0 or invalid, return empty string
+  if(len == 0 || len > EEPROM_HOST_MAX_LEN || len == 255) {
+    Serial.println("No hostname in EEPROM");
+    return Helper_RandomString();
+  }
+  
+  String hostname = "";
+  for(int i = 0; i < len; i++) {
+    hostname += (char)EEPROM.read(EEPROM_HOST_ADDR + 1 + i);
+  }
+  
+  Serial.println("Hostname loaded from EEPROM: " + hostname);
+  return hostname;
 }
 
 void Config_Loop() {

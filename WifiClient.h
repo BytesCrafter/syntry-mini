@@ -27,7 +27,7 @@ void WifiClient_connect(String apName = "Syntry-AP", String apPass = "bytescraft
 
   //Connect to WiFi Network
   Serial.println("Connecting to WiFi...");
-  Display_Show(" Syntry Mini v1", "WiFi Connecting.");
+  Display_Show(String(" ") + APP_NAME, "WiFi Connecting.");
   Buzzer_Play(1, 900, 300);
   WiFi.begin(ssid, password);
   int retries = 0;
@@ -40,7 +40,7 @@ void WifiClient_connect(String apName = "Syntry-AP", String apPass = "bytescraft
 
   if (WiFi.status() != WL_CONNECTED || retries > 14) {
     Serial.println("WiFi connection FAILED");
-    Display_Show(" Syntry Mini v1", "Wifi Conn Failed");
+    Display_Show(String(" ") + APP_NAME, "Wifi Conn Failed");
     Buzzer_Play(1, 900, 500);
   } else {
     timeClient.begin();
@@ -57,7 +57,7 @@ void WifiClient_connect(String apName = "Syntry-AP", String apPass = "bytescraft
       ipadd.close();
     }
 
-    Display_Show(" Syntry Mini v1", ">"+ipAddress);
+    Display_Show(String(" ") + APP_NAME, ">"+ipAddress);
     Buzzer_Play(1, 1200, 500);
     delay(1000);
   }

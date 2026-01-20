@@ -1,26 +1,42 @@
 /*
   Module: SDCard Module.
-  Version: 0.1.0
+  Version: 0.2.0
+  
+  WARNING: If SD Card is powered by 5V, MISO line needs voltage level shifter
+  or 220Ω resistor + 3.3V zener diode to protect ESP8266!
 */
 
 //Initialize the SD Card.
 void SDCard_Init(void (*callback)(String, String, String, String)) {
   Config_SelectSDCard();  // Select SD Card on SPI bus
+  delay(50);  // Allow power stabilization
   
   if (!SD.begin(SDCARD_CS_PIN)) {
     callback(" Syntry Mini v1", "> SDC Error...", "", "");
     Serial.println("SDCard initialization failed!");
+    Serial.println("Check: 1) Card inserted 2) Wiring 3) Card format (FAT32)");
     sdCardStatus = false;
   } else {
     callback(" Syntry Mini v1", "> SDC Loaded...", "", "");
     Serial.println("SDCard initialization done.");
-    sdCardStatus = true;
+    
+    // Verify card is working by attempting to open root directory
+    File root = SD.open("/");
+    if(root) {
+      Serial.println("SD Card  verified and ready");
+      root.close();
+      sdCardStatus = true;
+    } else {
+      Serial.println("SD Card mount failed!");
+      sdCardStatus = false;
+    }
   }
   
   Config_DeselectAll();  // Deselect after init
 }
 
 void SDCard_Save(String filename, String data, bool newLine = true) {
+  Config_SelectSDCard();  // Select SD Card
   
   File writeFile = SD.open(filename, FILE_WRITE);
 
@@ -30,43 +46,12 @@ void SDCard_Save(String filename, String data, bool newLine = true) {
     } else {
       writeFile.print(data);
     }
-    
+    writeFile.flush();  // Ensure data is written
     writeFile.close();
-    Serial.println("SD: Saved Success!");
+    Serial.println("SD: Saved Success - " + filename);
   } else {
-    Serial.println("SD: Save Failed!");
+    Serial.println("SD: Save Failed - " + filename);
   }
+  
+  Config_DeselectAll();  // Deselect after operation
 }
-
-// String SDCard_Load(String filename) {
-
-//   String data = "";
-//   File readFile = SD.open(filename);
-
-//   if (readFile) {
-//     // read from the file until there's nothing else in it:
-//     while (readFile.available()) {
-//       //Serial.write(myFile.read());
-//       data = readFile.readString();
-//     }
-
-//     readFile.close(); // close the file:
-//     Serial.println("SD: Read Success!");
-//   } else {
-//     // if the file didn't open, print an error:
-//     Serial.println("SD: Read Failed!");
-//   }
-
-//   return data;
-// }
-
-// bool SDCard_Delete(String filename) {
-
-//   SD.remove(filename);
-
-//   if (SD.exists(filename)) {
-//     return false;
-//   }
-
-//   return true;
-// }

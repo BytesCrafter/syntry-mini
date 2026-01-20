@@ -51,12 +51,13 @@
 */
 
 /* wiring the SD-Card to ESP8266 (042125) https://github.com/G6EJD/ESP8266-SD-Card-Reading-Writing/blob/master/ESP8266_D1_MicroSD_Test.ino
+  ⚠️ WARNING: If SD Card powered by 5V, add 220Ω resistor on MISO line to protect ESP8266!
   CS      = GPIO02   =  D4
   MOSI    = GPIO13   =  D7
-  MISO    = GPIO12   =  D6 + 220R Resistor
+  MISO    = GPIO12   =  D6 + 220R Resistor (REQUIRED for 5V SD card!)
   SCK     = GPIO14   =  D5
   GND     = GND
-  3.3V    = 3.3V
+  3.3V    = 3.3V (or 5V if using voltage regulator module)
 */
 
 /* wiring the LCD L2C to ESP8266 (042125)
@@ -125,20 +126,26 @@ bool access(String uid) {
   Buzzer_Play(1, 700, 50);
   Serial.println("UID: " + uid);
 
+  Config_SelectSDCard();  // Select SD Card before file operation
   String filepath = "users/" + uid;
   File accessFile = SD.open(filepath);
 
   if (!accessFile) {
+    Config_DeselectAll();  // Clean up SPI bus
     Display_Show(" Syntry Mini v1", " ACCESS  DENIED");
     Buzzer_Play(1, 400, 50);
+    Serial.println("Access denied: User not found");
     delay(500);
 
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
   } else {
     accessFile.close();
+    Config_DeselectAll();  // Clean up SPI bus
+    
     //String curTime = String(timeClient.getFormattedTime());
     //Display_Show(" Syntry Mini v1", " TIME: "+curTime);
     
+    Serial.println("Access granted: " + uid);
     //TODO: Save log to SDCard
     //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
 
@@ -153,16 +160,22 @@ bool access(String uid) {
 }
 
 bool add(String uid) {
+  Config_SelectSDCard();
   String filepath = "users/" + uid;
   File addFile = SD.open(filepath, FILE_WRITE);
 
   if (addFile) {
     addFile.print(""); //TODO: Should be date.
+    addFile.flush();
     addFile.close();
+    Config_DeselectAll();
+    Serial.println("User added: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: SAVED!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
+    Config_DeselectAll();
+    Serial.println("Failed to add user: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: FAILED!");
     Buzzer_Play(1, 300, 50); delay(1000);
     return false;
@@ -170,30 +183,40 @@ bool add(String uid) {
 }
 
 bool remove(String uid) {
+  Config_SelectSDCard();
   String filepath = "users/" + uid;
-  SD.remove(filepath);
+  bool removed = SD.remove(filepath);
+  bool exists = SD.exists(filepath);
+  Config_DeselectAll();
 
-  if (!SD.exists(filepath)) {
+  if (!exists && removed) {
+    Serial.println("User removed: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: DELETED!");
     Buzzer_Play(1, 900, 50); delay(1000);
-    return false;
+    return true;
   } else {
+    Serial.println("Failed to remove user: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: FAILED!");
     Buzzer_Play(1, 300, 50); delay(1000);
-    return true;
+    return false;
   }
 }
 
 bool verify(String uid) {
+  Config_SelectSDCard();
   String filepath = "users/" + uid;
   File verifyFile = SD.open(filepath);
 
   if (verifyFile) {
     verifyFile.close();
+    Config_DeselectAll();
+    Serial.println("User exists: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: EXISTING!");
     Buzzer_Play(1, 900, 50); delay(1000);
     return true;
   } else {
+    Config_DeselectAll();
+    Serial.println("User not found: " + uid);
     Display_Show(" Syntry Mini v1", " LOG: NOT FOUND!");
     Buzzer_Play(1, 300, 50); delay(1000);
     return false;
@@ -201,17 +224,23 @@ bool verify(String uid) {
 }
 
 bool sethostname(String uid) {
+  Config_SelectSDCard();
   String filepath = "settings/hostname";
   SD.remove(filepath);
   File pwFile = SD.open(filepath, FILE_WRITE);
 
   if (pwFile) {
     pwFile.print(uid);
+    pwFile.flush();
     pwFile.close();
+    Config_DeselectAll();
+    Serial.println("Hostname set: " + uid);
     Display_Show(" Syntry Mini v1", ">SET ADMIN: YES!");
     Buzzer_Play(1, 900, 100); delay(500);
     return true;
   } else {
+    Config_DeselectAll();
+    Serial.println("Failed to set hostname");
     Display_Show(" Syntry Mini v1", ">SET ADMIN: NO!");
     Buzzer_Play(1, 300, 100); delay(500);
     return false;

@@ -8,6 +8,7 @@
 
 //Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2); //16, 2 OR 20, 4
+byte lcdAddress = 0x27; // Default address, will be detected
 
 void Display_Detect() {
   byte error, address;
@@ -46,6 +47,10 @@ void Display_Detect() {
 
 //Required to initialize the display.
 void Display_Init() {
+  // Initialize I2C bus with correct pins for ESP8266
+  Wire.begin(4, 5); // SDA=GPIO4(D2), SCL=GPIO5(D1)
+  delay(100); // Allow I2C to stabilize
+  
   // Test I2C communication before initializing
   Wire.beginTransmission(0x27);
   byte error = Wire.endTransmission();
@@ -64,7 +69,10 @@ void Display_Init() {
     displayStatus = true;
     Config_AddBootLog("Display: LCD initialized (I2C 0x27)");
   } else {
-    Config_AddBootLog("Display: LCD Error at 0x27");
+    displayStatus = false;
+    String errorMsg = "Display: LCD Error " + String(error) + " at 0x27";
+    Config_AddBootLog(errorMsg);
+    Serial.println(errorMsg + " (2=NACK addr, 3=NACK data, 4=other)");
   }
 }
 

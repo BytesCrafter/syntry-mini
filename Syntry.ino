@@ -42,7 +42,7 @@
 
 /* wiring the MFRC522 to ESP8266 (042125) https://randomnerdtutorials.com/esp8266-nodemcu-mfrc522-rfid-reader-arduino/
   RST     = Not Connected (using software reset) Prev: GPIO16   =  D0
-  SDA(SS) = GPIO02   =  D3
+  SDA(SS) = GPIO02   =  D8
   MOSI    = GPIO13   =  D7
   MISO    = GPIO12   =  D6
   SCK     = GPIO14   =  D5
@@ -68,8 +68,7 @@
 */
 
 /* wiring the LIGHTS to ESP8266 (042125)
-  LED RED = GPIO09   =  SD2
-  LED GRN = GPIO08   =  SD1
+  LED     = GPIO15   =  D8
   RELAY   = GPIO16   =  D0  (No boot restrictions!)
   BUZZ    = GPIO15   =  D8
 */

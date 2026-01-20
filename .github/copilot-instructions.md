@@ -224,5 +224,5 @@ restart          - Soft restart
 
 **Future Considerations:**
 - **WiFi Station Mode Integration**: Full dual-mode (AP+STA) or mode switching
-- **LED Status Indicators**: Implement LIGHT_RED/GREEN visual feedback
+- **LED Status Indicators**: Implement Light_Blink/RED visual feedback
 - **Remote API**: WebRequest.h integration for cloud logging/monitoring

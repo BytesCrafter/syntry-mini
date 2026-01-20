@@ -3,8 +3,8 @@
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define APP_NAME "Syntry Access"
-#define APP_VERSION "1.4.0" 
-#define BUILD_DATE "2026-01-20"
+#define APP_VERSION "1.4.1" 
+#define BUILD_DATE "2026-01-21"
 
 #define BAUD_RATE 9600 
 
@@ -12,8 +12,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 // GPIO16 (D0) has no boot mode restrictions - perfect for relay!
 #define CONFIG_RELAY 16 // D0/GPIO16 - RELAY moved here (was RFID RST)
 
-#define LIGHT_RED 9 
-#define LIGHT_GREEN 8 
+#define LIGHT_PIN 0 // D3/GPIO0 - LED pin (same as buzzer) 
 
 #define WAIT_OPEN 2000 
 

@@ -110,7 +110,6 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 //ADVANCE
 #include "WifiClient.h"
 #include "Hotspot.h"
-// #include "Settings.h"
 
 bool access(String uid) {
   if(uid == Hotspot_Hostname()) {

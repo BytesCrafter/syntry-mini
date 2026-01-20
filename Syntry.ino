@@ -114,7 +114,8 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 bool access(String uid) {
   if(uid == Hotspot_Hostname()) {
-    SD.remove("users/admin");
+    // Reset admin password to default
+    Config_SavePassword("admin");
     Display_Show(" Syntry Mini v1", "RESET ADMIN PASS");
     Buzzer_Play(1, 1000, 100); delay(1000);
     Display_Show(" Syntry Mini v1", " TAP YOUR CARD");

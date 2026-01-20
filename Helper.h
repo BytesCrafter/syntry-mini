@@ -69,9 +69,10 @@ String Helper_HttpBackToMenu() {
   return ptr;
 }
 
-String Helper_Hotspot_Login() {
+String Helper_Hotspot_Login(String message = "") {
   String ptr = Helper_HttpHeader();
   ptr +="<h1>Syntry Mini v1</h1><h5>Powered by ERPat System</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
   ptr +="<form action='/login' method='get'>";
   ptr +="<input type='text' name='uname' placeholder='Username' required>";
   ptr +="<input type='password' name='pword' placeholder='Password' required>";

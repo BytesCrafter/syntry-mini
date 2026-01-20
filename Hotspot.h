@@ -42,21 +42,12 @@ void Hotspot_broadcast() {
     String uname = webServer.arg("uname");
     String pword = webServer.arg("pword");
 
-    //Check if SDCard has admin password.
-    String filepath = "users/admin";
-    File loginFile = SD.open(filepath);
+    // Get password from EEPROM (defaults to "admin" if not set)
+    String storedPassword = Config_LoadPassword();
     bool isAuth = false;
 
-    if (loginFile) {
-      String sdPass = loginFile.readString();
-      if(uname == "admin" && pword == sdPass) {
-        isAuth = true;
-      }
-      loginFile.close();
-    } else {
-      if(uname == "admin" && pword == "admin") {
-        isAuth = true;
-      }
+    if(uname == "admin" && pword == storedPassword) {
+      isAuth = true;
     }
 
     if(isAuth) {
@@ -65,7 +56,7 @@ void Hotspot_broadcast() {
       Buzzer_Play(1, 1000, 50); delay(1000);
       Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
     } else {
-      webServer.sendHeader("Location", String("/"), true);
+      webServer.sendHeader("Location", String("/?status=Invalid%20username%20or%20password!"), true);
       Display_Show(" Syntry Mini v1", "REPORTING STOP!");
       Buzzer_Play(1, 250, 50); delay(1000);
       Display_Show(" Syntry Mini v1", " TAP YOUR CARD");
@@ -90,15 +81,9 @@ void Hotspot_broadcast() {
     String newpass = webServer.arg("newpass");
     String confirmpass = webServer.arg("confirmpass");
 
-    if(newpass == confirmpass) {
-      String filepath = "users/admin";
-      SD.remove(filepath); //,ake sure delete if existing.
-
-      File pwFile = SD.open(filepath, FILE_WRITE);
-
-      if (pwFile) {
-        pwFile.print(confirmpass);
-        pwFile.close();
+    if(newpass == confirmpass && newpass.length() > 0) {
+      // Save password to EEPROM
+      if(Config_SavePassword(confirmpass)) {
         Display_Show(" Syntry Mini v1", "PASSWORD UPDATED");
         Buzzer_Play(1, 900, 1000);
 
@@ -208,7 +193,8 @@ void Hotspot_broadcast() {
 
   // replay to all requests with same HTML
   webServer.onNotFound([]() {
-    webServer.send(200, "text/html", Helper_Hotspot_Login());
+    String status = webServer.arg("status");
+    webServer.send(200, "text/html", Helper_Hotspot_Login(status));
   });
   webServer.begin();
   wifiStatus = true;

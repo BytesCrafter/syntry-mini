@@ -31,12 +31,57 @@ String Rfid_Status() {
   return rfidMode;
 }
 
+// EEPROM Password Management
+#define EEPROM_SIZE 512
+#define EEPROM_PASS_ADDR 0
+#define EEPROM_PASS_MAX_LEN 32
+
 void Config_Init() {
+  EEPROM.begin(EEPROM_SIZE);
+  
   // // Make sure CS lines are outputs and start HIGH (inactive)
   // pinMode(SDCARD_CS_PIN, OUTPUT); digitalWrite(SDCARD_CS_PIN, HIGH);
 
   // // Make sure CS lines are outputs and start HIGH (inactive)
   // pinMode(RFID_CS_PIN, OUTPUT); digitalWrite(RFID_CS_PIN, HIGH);
+}
+
+// Save password to EEPROM
+bool Config_SavePassword(String password) {
+  if(password.length() > EEPROM_PASS_MAX_LEN) {
+    return false;
+  }
+  
+  // Write password length
+  EEPROM.write(EEPROM_PASS_ADDR, password.length());
+  
+  // Write password string
+  for(int i = 0; i < password.length(); i++) {
+    EEPROM.write(EEPROM_PASS_ADDR + 1 + i, password[i]);
+  }
+  
+  EEPROM.commit();
+  Serial.println("Password saved to EEPROM");
+  return true;
+}
+
+// Load password from EEPROM
+String Config_LoadPassword() {
+  int len = EEPROM.read(EEPROM_PASS_ADDR);
+  
+  // If length is 0 or invalid, return default password
+  if(len == 0 || len > EEPROM_PASS_MAX_LEN || len == 255) {
+    Serial.println("No password in EEPROM, using default");
+    return "admin";
+  }
+  
+  String password = "";
+  for(int i = 0; i < len; i++) {
+    password += (char)EEPROM.read(EEPROM_PASS_ADDR + 1 + i);
+  }
+  
+  Serial.println("Password loaded from EEPROM");
+  return password;
 }
 
 void Config_Loop() {

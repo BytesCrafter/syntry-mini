@@ -105,7 +105,7 @@ String Helper_Hotspot_To_Menu() {
   ptr +="</div>";
   ptr +="<div class='split'>";
   ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
-  ptr +="<form action='/' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
+  ptr +="<form action='/logout' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
   ptr +="</div>";
   ptr +=Helper_HttpFooter();
   return ptr;

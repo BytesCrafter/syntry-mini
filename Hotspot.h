@@ -31,7 +31,6 @@ String Hotspot_GenerateSessionToken() {
 // Check if session is valid
 bool Hotspot_IsSessionValid() {
   if(activeSessionToken == "") {
-    Serial.println("Session: No active token");
     return false;
   }
   
@@ -42,30 +41,44 @@ bool Hotspot_IsSessionValid() {
     return false;
   }
   
-  // Get session cookie from request
-  if(!webServer.hasHeader("Cookie")) {
-    Serial.println("Session: No cookie header");
-    return false;
-  }
+  // Check session token in URL parameter (captive portal compatible)
+  String token = webServer.arg("token");
   
-  String cookieHeader = webServer.header("Cookie");
-  String expectedCookie = "session=" + activeSessionToken;
-  
-  Serial.println("Session token: " + activeSessionToken);
-  Serial.println("Cookie header: " + cookieHeader);
-  
-  bool isValid = cookieHeader.indexOf(expectedCookie) >= 0;
-  Serial.println("Session valid: " + String(isValid ? "YES" : "NO"));
-  
-  return isValid;
+  return token == activeSessionToken;
 }
 
 // Redirect to login if not authenticated
 void Hotspot_RequireAuth() {
   if(!Hotspot_IsSessionValid()) {
-    webServer.sendHeader("Location", String("/?status=Please%20login%20first!"), true);
-    webServer.send(200, "text/plain", "");
+    String html = "<!DOCTYPE html><html><head>";
+    html += "<meta charset='UTF-8'>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1.0'>";
+    html += "<meta http-equiv='refresh' content='0; url=/?status=Please%20login%20first!'>";
+    html += "<style>body{margin:0;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1ab394 0%,#138d75 100%);}";
+    html += ".msg{text-align:center;color:#fff;}.msg h1{font-size:24px;margin:0 0 10px 0;font-weight:300;}.msg p{font-size:14px;opacity:0.9;margin:0;}</style>";
+    html += "</head><body><div class='msg'><h1>" + String(APP_NAME) + "</h1><p>Redirecting to login...</p></div></body></html>";
+    webServer.send(200, "text/html", html);
   }
+}
+
+// Get current session token parameter for URL generation
+String Hotspot_GetTokenParam() {
+  if(activeSessionToken != "") {
+    return "?token=" + activeSessionToken;
+  }
+  return "";
+}
+
+// Add token to URL with proper separator
+String Hotspot_AddToken(String url) {
+  if(activeSessionToken != "") {
+    if(url.indexOf('?') >= 0) {
+      return url + "&token=" + activeSessionToken;
+    } else {
+      return url + "?token=" + activeSessionToken;
+    }
+  }
+  return url;
 }
 
 void Hotspot_broadcast() {
@@ -102,10 +115,15 @@ void Hotspot_broadcast() {
       Serial.println("Login successful - Session token: " + activeSessionToken);
       Config_AddBootLog("Web: Admin logged in");
       
-      // Set session cookie and send menu page directly (avoid redirect timing issue)
-      String cookieValue = "session=" + activeSessionToken + "; Path=/; HttpOnly; Max-Age=1800";
-      webServer.sendHeader("Set-Cookie", cookieValue);
-      webServer.send(200, "text/html", Helper_Hotspot_To_Menu());
+      // Redirect to menu with token in URL (captive portal compatible)
+      String html = "<!DOCTYPE html><html><head>";
+      html += "<meta charset='UTF-8'>";
+      html += "<meta name='viewport' content='width=device-width,initial-scale=1.0'>";
+      html += "<meta http-equiv='refresh' content='0; url=/menu?token=" + activeSessionToken + "'>";
+      html += "<style>body{margin:0;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1ab394 0%,#138d75 100%);}";
+      html += ".msg{text-align:center;color:#fff;}.msg h1{font-size:24px;margin:0 0 10px 0;font-weight:300;}.msg p{font-size:14px;opacity:0.9;margin:0;}</style>";
+      html += "</head><body><div class='msg'><h1>" + String(APP_NAME) + "</h1><p>Login successful, redirecting...</p></div></body></html>";
+      webServer.send(200, "text/html", html);
       
       // Update display AFTER sending response
       Display_Show(String(" ") + APP_NAME, "WELCOME! ADMIN");
@@ -116,9 +134,8 @@ void Hotspot_broadcast() {
       Serial.println("Login failed - Invalid credentials");
       Config_AddBootLog("Web: Failed login attempt");
       
-      // Redirect to login with error
-      webServer.sendHeader("Location", "/?status=Invalid%20username%20or%20password!");
-      webServer.send(200, "text/plain", "");
+      // Send login page with error message (avoid redirect timing issue)
+      webServer.send(200, "text/html", Helper_Hotspot_Login("Invalid username or password!"));
       
       // Update display AFTER sending response
       Display_Show(String(" ") + APP_NAME, "REPORTING STOP!");

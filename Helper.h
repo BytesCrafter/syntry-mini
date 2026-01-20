@@ -71,7 +71,10 @@ String Helper_HttpFooter() {
 }
 
 String Helper_HttpBackToMenu() {
-  String ptr = "<form action='/menu' method='get'><input type='submit' value='Back to Menu'></form>";
+  extern String activeSessionToken;
+  String ptr = "<form action='/menu' method='get'>";
+  ptr += "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  ptr += "<input type='submit' value='Back to Menu'></form>";
   return ptr;
 }
 
@@ -88,33 +91,39 @@ String Helper_Hotspot_Login(String message = "") {
 }
 
 String Helper_Hotspot_To_Menu() {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
   String ptr = Helper_HttpHeader();
   ptr += String("<h1>") + APP_NAME + "</h1><h5>Control Panel</h5>";
   ptr +="<div class='grid'>";
-  ptr +="<form action='/verify' method='get'><input type='submit' value='Verify Mode'></form>";
-  ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
-  ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
-  ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
-  ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
-  ptr +="<form action='/change-hostname' method='get'><input type='submit' value='Change Hostname'></form>";
-  ptr +="<form action='/boot-logs' method='get'><input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
-  ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup' style='background:#3498db'></form>";
+  ptr +="<form action='/verify' method='get'>" + token + "<input type='submit' value='Verify Mode'></form>";
+  ptr +="<form action='/access' method='get'>" + token + "<input type='submit' value='Access Mode'></form>";
+  ptr +="<form action='/add' method='get'>" + token + "<input type='submit' value='Add Card'></form>";
+  ptr +="<form action='/remove' method='get'>" + token + "<input type='submit' value='Remove Card'></form>";
+  ptr +="<form action='/change-password' method='get'>" + token + "<input type='submit' value='Change Password'></form>";
+  ptr +="<form action='/change-hostname' method='get'>" + token + "<input type='submit' value='Change Hostname'></form>";
+  ptr +="<form action='/boot-logs' method='get'>" + token + "<input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
+  ptr +="<form action='/wifi-connect' method='get'>" + token + "<input type='submit' value='WiFi Setup' style='background:#3498db'></form>";
   int userCount = SDCard_CountUsers();
-  ptr +="<form action='/manage-users' method='get'><input type='submit' value='Manage Users (" + String(userCount) + ")' style='background:#8e44ad'></form>";
-  ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
+  ptr +="<form action='/manage-users' method='get'>" + token + "<input type='submit' value='Manage Users (" + String(userCount) + ")' style='background:#8e44ad'></form>";
+  ptr +="<form action='/system' method='get'>" + token + "<input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="</div>";
   ptr +="<div class='split'>";
-  ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
-  ptr +="<form action='/logout' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
+  ptr +="<form action='/menu' method='get'>" + token + "<input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
+  ptr +="<form action='/logout' method='get'>" + token + "<input type='submit' value='Logout' style='background:#e53e3e'></form>";
   ptr +="</div>";
   ptr +=Helper_HttpFooter();
   return ptr;
 }
 
 String Helper_Hotspot_To_Access() {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
   String ptr = Helper_HttpHeader();
   ptr +="<h1>Access Mode</h1><h5>Tap your RFID card</h5>";
-  ptr +="<form action='/access' method='get'><input type='hidden' name='action' value='override'><input type='submit' value='Override Access' style='background:#48bb78'></form>";
+  ptr +="<form action='/access' method='get'>" + token + "<input type='hidden' name='action' value='override'><input type='submit' value='Override Access' style='background:#48bb78'></form>";
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();
   return ptr;
@@ -145,10 +154,12 @@ String Helper_Hotspot_To_Verify() {
 }
 
 String Helper_Hotspot_ChangePassword(String message = "") {
+  extern String activeSessionToken;
   String ptr = Helper_HttpHeader();
   ptr +="<h1>Change Password</h1><h5>Update admin credentials</h5>";
   if(message != "") ptr +="<h6>"+message+"</h6>";
   ptr +="<form action='/update-password' method='get'>";
+  ptr += "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
   ptr +="<input type='password' name='newpass' placeholder='New Password' required>";
   ptr +="<input type='password' name='confirmpass' placeholder='Confirm Password' required>";
   ptr +="<input type='submit' value='UPDATE'></form>";
@@ -158,6 +169,7 @@ String Helper_Hotspot_ChangePassword(String message = "") {
 }
 
 String Helper_Hotspot_ChangeHostname(String message = "") {
+  extern String activeSessionToken;
   // Get current hostname from EEPROM
   String currentHostname = Config_LoadHostname();
   
@@ -166,6 +178,7 @@ String Helper_Hotspot_ChangeHostname(String message = "") {
   if(message != "") ptr +="<h6>"+message+"</h6>";
   if(currentHostname != "") ptr +="<p style='text-align:center;color:#6c757d;margin-bottom:15px'>Current: <b>"+currentHostname+"</b></p>";
   ptr +="<form action='/update-hostname' method='get'>";
+  ptr += "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
   ptr +="<input type='text' name='newhostname' placeholder='New Hostname' required maxlength='20'>";
   ptr +="<input type='submit' value='UPDATE'></form>";
   ptr +=Helper_HttpBackToMenu();
@@ -174,6 +187,9 @@ String Helper_Hotspot_ChangeHostname(String message = "") {
 }
 
 String Helper_Hotspot_ConnectWifi(String message = "") {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
   String ptr = Helper_HttpHeader();
   ptr +="<h1>WiFi Setup</h1><h5>Network connection</h5>";
   if(message != "") ptr +="<h6>"+message+"</h6>";
@@ -194,24 +210,25 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
   
   // Connection controls
   if(WiFi.status() == WL_CONNECTED) {
-    ptr +="<form action='/wifi-disconnect' method='get'><input type='submit' value='Disconnect' style='background:#dc3545'></form>";
+    ptr +="<form action='/wifi-disconnect' method='get'>" + token + "<input type='submit' value='Disconnect' style='background:#dc3545'></form>";
   } else {
     String savedSSID = Config_LoadWifiSSID();
     if(savedSSID != "") {
-      ptr +="<form action='/wifi-manual-connect' method='get'><input type='submit' value='Connect to: " + savedSSID + "' style='background:#28a745'></form>";
+      ptr +="<form action='/wifi-manual-connect' method='get'>" + token + "<input type='submit' value='Connect to: " + savedSSID + "' style='background:#28a745'></form>";
     }
   }
   
   // Auto-connect toggle
   if(Config_LoadWifiAuto()) {
-    ptr +="<form action='/wifi-toggle-auto' method='get'><input type='submit' value='Disable Auto-Connect' style='background:#6c757d'></form>";
+    ptr +="<form action='/wifi-toggle-auto' method='get'>" + token + "<input type='submit' value='Disable Auto-Connect' style='background:#6c757d'></form>";
   } else {
-    ptr +="<form action='/wifi-toggle-auto' method='get'><input type='submit' value='Enable Auto-Connect' style='background:#17a085'></form>";
+    ptr +="<form action='/wifi-toggle-auto' method='get'>" + token + "<input type='submit' value='Enable Auto-Connect' style='background:#17a085'></form>";
   }
   
   // WiFi credentials form
   ptr +="<h5 style='margin-top:30px;margin-bottom:15px'>Update Credentials</h5>";
   ptr +="<form action='/save-wifi' method='get'>";
+  ptr += token;
   ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
   ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
   ptr +="<input type='submit' value='SAVE & CONNECT'></form>";
@@ -222,6 +239,9 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
 }
 
 String Helper_Hotspot_ManageUsers(String message = "") {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
   String ptr = Helper_HttpHeader();
   ptr +="<h1>Manage Users</h1><h5>Registered RFID Cards</h5>";
   if(message != "") ptr +="<h6>"+message+"</h6>";
@@ -249,6 +269,7 @@ String Helper_Hotspot_ManageUsers(String message = "") {
           ptr +="<div style='display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e9ecef'>";
           ptr +="<span style='font-weight:500;color:#495057'>"+fileName+"</span>";
           ptr +="<form action='/delete-user' method='get' style='margin:0'>";
+          ptr += token;
           ptr +="<input type='hidden' name='uid' value='"+fileName+"'>";
           ptr +="<input type='submit' value='Delete' style='padding:6px 12px;font-size:12px;background:#dc3545;width:auto;margin:0'>";
           ptr +="</form></div>";

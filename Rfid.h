@@ -17,22 +17,36 @@ void Rfid_Init(void (*callback)(String, String, String, String)) {
   mfrc522.PCD_Init();		// Init MFRC522
   delay(500);				// Optional delay. Some board do need more time after init to be ready, see Readme
 
-  Config_AddBootLog("MFRC522: Digital self test");
-  mfrc522.PCD_DumpVersionToSerial();  // Show version of PCD - MFRC522 Card Reader
-  Config_AddBootLog("MFRC522: Only known versions supported");
+  // Check if RFID is responding by reading version
+  Config_AddBootLog("MFRC522: Checking version");
+  byte version = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
+  Serial.print("MFRC522 Firmware Version: 0x");
+  Serial.println(version, HEX);
   
-  Config_AddBootLog("MFRC522: Performing test...");
-  bool result = mfrc522.PCD_PerformSelfTest(); // perform the test
-  if (result) {
-    Config_AddBootLog("MFRC522: Result: OK");
+  // Known good versions: 0x91, 0x92 (v1.0, v2.0)
+  if (version == 0x91 || version == 0x92) {
+    Config_AddBootLog("MFRC522: Version OK (0x" + String(version, HEX) + ")");
+    Config_DeselectAll();  // Release SPI bus
+    
     callback(String(" ") + APP_NAME, "> RFID Loaded...", "", "");
     rfidStatus = true;
-  } else {
-    Config_AddBootLog("MFRC522: Result: DEFECT or UNKNOWN");
+  } else if (version == 0x00 || version == 0xFF) {
+    Config_AddBootLog("MFRC522: Communication error!");
+    Serial.println("WARNING: Communication failure, check connections.");
+    Config_DeselectAll();
+    
     callback(String(" ") + APP_NAME, "> RFID Error...", "", "");
+    rfidStatus = false;
+  } else {
+    // Unknown version but responding
+    Config_AddBootLog("MFRC522: Unknown version (0x" + String(version, HEX) + ")");
+    Config_DeselectAll();
+    
+    callback(String(" ") + APP_NAME, "> RFID Unknown...", "", "");
+    rfidStatus = true; // Try to use it anyway
   }
-  Serial.println();
   
+  Serial.println();
   //Serial.println(F("Scan PICC to see UID, SAK, type, and data blocks..."));
 }
 

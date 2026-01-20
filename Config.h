@@ -8,7 +8,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define BAUD_RATE 9600 
 
-#define BUZZER 15 // D8/GPIO15 - Buzzer pin
+#define BUZZER 0 // D3/GPIO0 - Buzzer pin (moved from D8)
 // GPIO16 (D0) has no boot mode restrictions - perfect for relay!
 #define CONFIG_RELAY 16 // D0/GPIO16 - RELAY moved here (was RFID RST)
 
@@ -17,7 +17,7 @@ String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define WAIT_OPEN 2000 
 
-#define RFID_CS_PIN 0 // D3 - Configurable, see typical pin layout above /def 4
+#define RFID_CS_PIN 15 // D8 - Changed from D3, now used for RFID CS
 #define SDCARD_CS_PIN 2 // D4 - 
 
 bool isLoaded = false;
@@ -73,6 +73,10 @@ void Config_Init() {
   digitalWrite(RFID_CS_PIN, HIGH);
   
   Serial.println("CS Pins initialized");
+  
+  // Initialize SPI bus for RFID and SD Card communication
+  SPI.begin();
+  Serial.println("SPI bus initialized");
 }
 
 // SPI Bus Management - Call before using RFID

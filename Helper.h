@@ -46,7 +46,7 @@ String Helper_HttpHeader() {
   ptr +="<title>Syntry</title><style>";
   ptr +="*{margin:0;padding:0;box-sizing:border-box}";
   ptr +="body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#1ab394 0%,#26d0b0 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}";
-  ptr +=".c{background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.15);padding:40px;max-width:400px;width:100%}";
+  ptr +=".c{background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.15);padding:40px;max-width:500px;width:100%}";
   ptr +="h1{color:#1a1a1a;font-size:28px;margin-bottom:8px;text-align:center;font-weight:700}";
   ptr +="h5{color:#6c757d;font-size:14px;margin-bottom:30px;text-align:center;font-weight:400}";
   ptr +="h6{color:#dc3545;font-size:13px;margin-bottom:15px;text-align:center}";
@@ -55,6 +55,12 @@ String Helper_HttpHeader() {
   ptr +="input[type=submit]{width:100%;padding:16px;background:#1ab394;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:.3s;margin-bottom:12px;box-shadow:0 4px 15px rgba(26,179,148,.3)}";
   ptr +="input[type=submit]:hover{background:#17a085;transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,179,148,.4)}";
   ptr +="input[type=submit]:active{transform:translateY(0)}";
+  ptr +=".grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}";
+  ptr +=".grid form{margin:0}";
+  ptr +=".grid input[type=submit]{height:100px;margin:0;font-size:15px;padding:10px}";
+  ptr +=".split{display:grid;grid-template-columns:1fr 1fr;gap:12px}";
+  ptr +=".split form{margin:0}";
+  ptr +=".split input[type=submit]{margin:0}";
   ptr +="</style></head><body><div class=\"c\">";
   return ptr;
 }
@@ -84,15 +90,19 @@ String Helper_Hotspot_Login(String message = "") {
 String Helper_Hotspot_To_Menu() {
   String ptr = Helper_HttpHeader();
   ptr +="<h1>Syntry Mini v1</h1><h5>Control Panel</h5>";
+  ptr +="<div class='grid'>";
   ptr +="<form action='/verify' method='get'><input type='submit' value='Verify Mode'></form>";
   ptr +="<form action='/access' method='get'><input type='submit' value='Access Mode'></form>";
   ptr +="<form action='/add' method='get'><input type='submit' value='Add Card'></form>";
   ptr +="<form action='/remove' method='get'><input type='submit' value='Remove Card'></form>";
   ptr +="<form action='/wifi-connect' method='get'><input type='submit' value='WiFi Setup'></form>";
   ptr +="<form action='/change-password' method='get'><input type='submit' value='Change Password'></form>";
+  ptr +="</div>";
   ptr +="<form action='/system' method='get'><input type='submit' value='System Info' style='background:#f39c12'></form>";
+  ptr +="<div class='split'>";
   ptr +="<form action='/menu' method='get'><input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
   ptr +="<form action='/' method='get'><input type='submit' value='Logout' style='background:#e53e3e'></form>";
+  ptr +="</div>";
   ptr +=Helper_HttpFooter();
   return ptr;
 }

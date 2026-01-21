@@ -110,7 +110,7 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/system' method='get'>" + token + "<input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="</div>";
   ptr +="<div class='split'>";
-  ptr +="<form action='/menu' method='get'>" + token + "<input type='hidden' name='action' value='restart'><input type='submit' value='Restart'></form>";
+  ptr +="<form action='/menu' method='get'>" + token + "<input type='hidden' name='action' value='restart'><input type='submit' value='Restart' style='background:#FFC107;color:#000'></form>";
   ptr +="<form action='/logout' method='get'>" + token + "<input type='submit' value='Logout' style='background:#e53e3e'></form>";
   ptr +="</div>";
   ptr +=Helper_HttpFooter();
@@ -238,59 +238,203 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
   return ptr;
 }
 
-String Helper_Hotspot_ManageUsers(String message = "") {
+String Helper_Hotspot_ManageUsers(String message = "", int page = 0) {
   extern String activeSessionToken;
   String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
   
-  String ptr = Helper_HttpHeader();
-  ptr +="<h1>Manage Users</h1><h5>Registered RFID Cards</h5>";
-  if(message != "") ptr +="<h6>"+message+"</h6>";
+  const int USERS_PER_PAGE = 10;  // Show 15 users per page
+  int skipCount = page * USERS_PER_PAGE;
   
-  // Read all user files from SD card
+  // Collect only the users for this page with nicknames
+  String userFiles[USERS_PER_PAGE];
+  String userNicks[USERS_PER_PAGE];  // Nickname from file content
+  int displayCount = 0;
+  int totalCount = 0;
+  int skipped = 0;
+  
   Config_SelectSDCard();
   File usersDir = SD.open("/users");
   
   if(usersDir && usersDir.isDirectory()) {
-    ptr +="<div style='text-align:left;font-size:13px;line-height:1.8'>";
-    
-    int userCount = 0;
     File entry = usersDir.openNextFile();
     
     while(entry) {
       if(!entry.isDirectory()) {
         String fileName = String(entry.name());
-        // Remove path prefix if present
         int lastSlash = fileName.lastIndexOf('/');
         if(lastSlash >= 0) {
           fileName = fileName.substring(lastSlash + 1);
         }
-        
-        if(fileName != "admin" && fileName.length() > 0) {
-          ptr +="<div style='display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e9ecef'>";
-          ptr +="<span style='font-weight:500;color:#495057'>"+fileName+"</span>";
-          ptr +="<form action='/delete-user' method='get' style='margin:0'>";
-          ptr += token;
-          ptr +="<input type='hidden' name='uid' value='"+fileName+"'>";
-          ptr +="<input type='submit' value='Delete' style='padding:6px 12px;font-size:12px;background:#dc3545;width:auto;margin:0'>";
-          ptr +="</form></div>";
-          userCount++;
+        if(fileName != "admin" && fileName.length() > 0 && fileName.length() <= 16) {
+          totalCount++;
+          
+          // Skip users before this page
+          if(skipped < skipCount) {
+            skipped++;
+          } else if(displayCount < USERS_PER_PAGE) {
+            userFiles[displayCount] = fileName;
+            // Read nickname from file content
+            String nick = "";
+            if(entry.available()) {
+              nick = entry.readStringUntil('\n');
+              nick.trim();
+              if(nick.length() > 12) nick = nick.substring(0, 12);  // Limit length
+            }
+            userNicks[displayCount] = nick;
+            displayCount++;
+          }
         }
       }
       entry.close();
       entry = usersDir.openNextFile();
+      
+      // Yield every 20 files to prevent watchdog
+      if(totalCount % 20 == 0) yield();
+    }
+    usersDir.close();
+  }
+  Config_DeselectAll();
+  
+  // Calculate pagination info
+  int totalPages = (totalCount + USERS_PER_PAGE - 1) / USERS_PER_PAGE;
+  if(totalPages < 1) totalPages = 1;
+  int startNum = skipCount + 1;
+  int endNum = skipCount + displayCount;
+  
+  // Build HTML
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Manage Users</h1>";
+  ptr +="<h5>Total: " + String(totalCount) + " cards</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  
+  // Add User button at top
+  ptr +="<form action='/add-user' method='get' style='margin-bottom:15px'>" + token;
+  ptr +="<input type='submit' value='+ Add New User' style='background:#27ae60'>";
+  ptr +="</form>";
+  
+  // Pagination header
+  if(totalCount > USERS_PER_PAGE) {
+    ptr +="<div style='text-align:center;margin-bottom:15px;font-size:13px;color:#495057'>";
+    ptr +="Page " + String(page + 1) + "/" + String(totalPages);
+    ptr +=" (showing " + String(startNum) + "-" + String(endNum) + ")";
+    ptr +="</div>";
+  }
+  
+  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8'>";
+  
+  if(displayCount > 0) {
+    // Table header
+    ptr +="<div style='display:flex;padding:8px 10px;border-bottom:2px solid #17a085;font-weight:bold;font-size:11px;color:#17a085'>";
+    ptr +="<span style='flex:2'>UID</span>";
+    ptr +="<span style='flex:2'>Nickname</span>";
+    ptr +="<span style='flex:1;text-align:right'>Actions</span>";
+    ptr +="</div>";
+    
+    for(int i = 0; i < displayCount; i++) {
+      String nick = userNicks[i].length() > 0 ? userNicks[i] : "-";
+      ptr +="<div style='display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #e9ecef'>";
+      ptr +="<span style='flex:2;font-weight:500;color:#495057;font-size:11px'>" + String(startNum + i) + ". "+userFiles[i]+"</span>";
+      ptr +="<span style='flex:2;color:#6c757d;font-size:11px'>" + nick + "</span>";
+      ptr +="<div style='flex:1;display:flex;gap:5px;justify-content:flex-end'>";
+      ptr +="<form action='/edit-user' method='get' style='margin:0'>" + token;
+      ptr +="<input type='hidden' name='uid' value='"+userFiles[i]+"'>";
+      ptr +="<input type='hidden' name='page' value='" + String(page) + "'>";
+      ptr +="<input type='submit' value='Edit' style='padding:5px 8px;font-size:10px;background:#17a085;width:auto;margin:0'>";
+      ptr +="</form>";
+      ptr +="<form action='/delete-user' method='get' style='margin:0'>" + token;
+      ptr +="<input type='hidden' name='uid' value='"+userFiles[i]+"'>";
+      ptr +="<input type='hidden' name='page' value='" + String(page) + "'>";
+      ptr +="<input type='submit' value='Del' style='padding:5px 8px;font-size:10px;background:#dc3545;width:auto;margin:0'>";
+      ptr +="</form></div></div>";
+    }
+  } else {
+    ptr +="<p style='text-align:center;color:#6c757d;padding:20px'>No users registered</p>";
+  }
+  
+  ptr +="</div>";
+  
+  // Pagination buttons
+  if(totalPages > 1) {
+    ptr +="<div style='display:flex;gap:10px;margin-top:15px'>";
+    
+    // Previous button
+    if(page > 0) {
+      ptr +="<form action='/manage-users' method='get' style='flex:1;margin:0'>" + token;
+      ptr +="<input type='hidden' name='page' value='" + String(page - 1) + "'>";
+      ptr +="<input type='submit' value='Previous' style='background:#6c757d;width:100%'>";
+      ptr +="</form>";
+    } else {
+      ptr +="<div style='flex:1'></div>";
     }
     
-    if(userCount == 0) {
-      ptr +="<p style='text-align:center;color:#6c757d;padding:20px'>No users registered</p>";
+    // Next button
+    if(page < totalPages - 1) {
+      ptr +="<form action='/manage-users' method='get' style='flex:1;margin:0'>" + token;
+      ptr +="<input type='hidden' name='page' value='" + String(page + 1) + "'>";
+      ptr +="<input type='submit' value='Next' style='background:#17a085;width:100%'>";
+      ptr +="</form>";
+    } else {
+      ptr +="<div style='flex:1'></div>";
     }
     
     ptr +="</div>";
-    usersDir.close();
-  } else {
-    ptr +="<p style='text-align:center;color:#dc3545'>Error reading users directory</p>";
   }
   
-  Config_DeselectAll();
+  // Clear All Users section
+  if(totalCount > 0) {
+    ptr +="<div style='margin:20px 0 10px;padding:15px;background:#fff3cd;border-radius:8px;border:1px solid #ffc107'>";
+    ptr +="<p style='margin:0 0 10px 0;color:#856404;font-weight:bold;font-size:14px'>Danger Zone</p>";
+    ptr +="<form action='/clear-all-users' method='get'>" + token;
+    ptr +="<input type='password' name='adminpass' placeholder='Admin password' style='margin-bottom:10px' required>";
+    ptr +="<input type='submit' value='Clear All (" + String(totalCount) + " users)' style='background:#dc3545'>";
+    ptr +="</form></div>";
+  }
+  
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
+String Helper_Hotspot_EditUser(String uid, String nickname = "", String message = "", int page = 0) {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Edit User</h1>";
+  ptr +="<h5>UID: " + uid + "</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  
+  ptr +="<form action='/save-user' method='get'>" + token;
+  ptr +="<input type='hidden' name='uid' value='" + uid + "'>";
+  ptr +="<input type='hidden' name='page' value='" + String(page) + "'>";
+  ptr +="<input type='text' name='nickname' value='" + nickname + "' placeholder='Enter nickname (max 20 chars)' maxlength='20'>";
+  ptr +="<input type='submit' value='Save Nickname'>";
+  ptr +="</form>";
+  
+  ptr +="<form action='/manage-users' method='get' style='margin-top:10px'>" + token;
+  ptr +="<input type='hidden' name='page' value='" + String(page) + "'>";
+  ptr +="<input type='submit' value='Back to Users' style='background:#6c757d'>";
+  ptr +="</form>";
+  
+  ptr +=Helper_HttpBackToMenu();
+  ptr +=Helper_HttpFooter();
+  return ptr;
+}
+
+String Helper_Hotspot_AddUser(String message = "") {
+  extern String activeSessionToken;
+  String token = "<input type='hidden' name='token' value='" + activeSessionToken + "'>";
+  
+  String ptr = Helper_HttpHeader();
+  ptr +="<h1>Add User</h1>";
+  ptr +="<h5>Register New Card Manually</h5>";
+  if(message != "") ptr +="<h6>"+message+"</h6>";
+  
+  ptr +="<form action='/create-user' method='get'>" + token;
+  ptr +="<input type='text' name='uid' placeholder='RFID Key (8 hex chars)' maxlength='16' required pattern='[A-Fa-f0-9]+' style='text-transform:uppercase'>";
+  ptr +="<input type='text' name='nickname' placeholder='Nickname (optional)' maxlength='20'>";
+  ptr +="<input type='submit' value='Add User' style='background:#27ae60'>";
+  ptr +="</form>";
   
   ptr +=Helper_HttpBackToMenu();
   ptr +=Helper_HttpFooter();
@@ -327,7 +471,7 @@ String Helper_Hotspot_SystemInfo() {
   
   String ptr = Helper_HttpHeader();
   ptr +="<h1>System Info</h1><h5>ESP8266 Statistics</h5>";
-  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057'>";  
+  ptr +="<div style='text-align:left;font-size:13px;line-height:1.8;color:#495057;margin-bottom:15px'>";  
   
   // Device Name
   ptr +="<b>Device Name:</b><br>";

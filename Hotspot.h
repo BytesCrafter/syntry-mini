@@ -182,7 +182,8 @@ void Hotspot_broadcast() {
       return;
     }
     String status = webServer.arg("status");
-    webServer.send(200, "text/html", Helper_Hotspot_ManageUsers(status));
+    int page = webServer.arg("page").toInt();  // Get page number (default 0)
+    webServer.send(200, "text/html", Helper_Hotspot_ManageUsers(status, page));
   });
 
   webServer.on("/boot-logs", []() {
@@ -193,6 +194,134 @@ void Hotspot_broadcast() {
     webServer.send(200, "text/html", Helper_Hotspot_BootLogs());
   });
 
+  webServer.on("/edit-user", []() {
+    if(!Hotspot_IsSessionValid()) {
+      Hotspot_RequireAuth();
+      return;
+    }
+    
+    String uid = webServer.arg("uid");
+    String status = webServer.arg("status");
+    int page = webServer.arg("page").toInt();
+    
+    // Read current nickname from file
+    String nickname = "";
+    if(uid.length() > 0) {
+      Config_SelectSDCard();
+      File f = SD.open("users/" + uid, FILE_READ);
+      if(f) {
+        if(f.available()) {
+          nickname = f.readStringUntil('\n');
+          nickname.trim();
+        }
+        f.close();
+      }
+      Config_DeselectAll();
+    }
+    
+    webServer.send(200, "text/html", Helper_Hotspot_EditUser(uid, nickname, status, page));
+  });
+
+  webServer.on("/add-user", []() {
+    if(!Hotspot_IsSessionValid()) {
+      Hotspot_RequireAuth();
+      return;
+    }
+    String status = webServer.arg("status");
+    webServer.send(200, "text/html", Helper_Hotspot_AddUser(status));
+  });
+
+  webServer.on("/create-user", []() {
+    if(!Hotspot_IsSessionValid()) {
+      Hotspot_RequireAuth();
+      return;
+    }
+    
+    String uid = webServer.arg("uid");
+    String nickname = webServer.arg("nickname");
+    
+    // Validate UID (must be hex chars, 4-16 length)
+    uid.toUpperCase();
+    bool validUid = uid.length() >= 4 && uid.length() <= 16;
+    for(int i = 0; i < uid.length() && validUid; i++) {
+      char c = uid.charAt(i);
+      if(!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))) validUid = false;
+    }
+    
+    if(!validUid) {
+      webServer.sendHeader("Location", Hotspot_AddToken("/add-user?status=Invalid%20UID%20format!"), true);
+      webServer.send(302, "text/plain", "");
+      return;
+    }
+    
+    // Check if user already exists
+    Config_SelectSDCard();
+    String filepath = "users/" + uid;
+    if(SD.exists(filepath)) {
+      Config_DeselectAll();
+      webServer.sendHeader("Location", Hotspot_AddToken("/add-user?status=User%20already%20exists!"), true);
+      webServer.send(302, "text/plain", "");
+      return;
+    }
+    
+    // Create new user file
+    File f = SD.open(filepath, FILE_WRITE);
+    if(f) {
+      if(nickname.length() > 0) {
+        f.print(nickname);
+      }
+      f.close();
+      Config_DeselectAll();
+      
+      Display_Show(String(" ") + APP_NAME, "USER ADDED");
+      Buzzer_Play(1, 900, 500);
+      Serial.println("User added via web: " + uid + " (" + nickname + ")");
+      
+      webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=User%20" + uid + "%20added!"), true);
+      webServer.send(302, "text/plain", "");
+      return;
+    }
+    Config_DeselectAll();
+    
+    webServer.sendHeader("Location", Hotspot_AddToken("/add-user?status=Failed%20to%20create%20user!"), true);
+    webServer.send(302, "text/plain", "");
+  });
+
+  webServer.on("/save-user", []() {
+    if(!Hotspot_IsSessionValid()) {
+      Hotspot_RequireAuth();
+      return;
+    }
+    
+    String uid = webServer.arg("uid");
+    String nickname = webServer.arg("nickname");
+    int page = webServer.arg("page").toInt();
+    
+    if(uid.length() > 0) {
+      Config_SelectSDCard();
+      // Remove old file and create new with nickname content
+      String filepath = "users/" + uid;
+      SD.remove(filepath);
+      File f = SD.open(filepath, FILE_WRITE);
+      if(f) {
+        if(nickname.length() > 0) {
+          f.print(nickname);
+        }
+        f.close();
+        Config_DeselectAll();
+        
+        Serial.println("User nickname saved: " + uid + " -> " + nickname);
+        webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Nickname%20saved!&page=" + String(page)), true);
+        webServer.send(302, "text/plain", "");
+        return;
+      }
+      Config_DeselectAll();
+    }
+    
+    webServer.sendHeader("Location", Hotspot_AddToken("/edit-user?uid=" + uid + "&status=Failed%20to%20save!&page=" + String(page)), true);
+    webServer.send(302, "text/plain", "");
+  });
+
   webServer.on("/delete-user", []() {
     if(!Hotspot_IsSessionValid()) {
       Hotspot_RequireAuth();
@@ -200,6 +329,8 @@ void Hotspot_broadcast() {
     }
     
     String uid = webServer.arg("uid");
+    String pageStr = webServer.arg("page");
+    int page = pageStr.toInt();
 
     if(uid.length() > 0) {
       Config_SelectSDCard();
@@ -212,13 +343,76 @@ void Hotspot_broadcast() {
         Buzzer_Play(1, 900, 500);
         Serial.println("User deleted via web: " + uid);
         
-        webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=User%20deleted!"), true);
+        webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=User%20deleted!&page=" + String(page)), true);
         webServer.send(302, "text/plain", "");
         return;
       }
     }
 
-    webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Failed%20to%20delete%20user!"), true);
+    webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Failed%20to%20delete%20user!&page=" + String(page)), true);
+    webServer.send(302, "text/plain", "");
+  });
+
+  webServer.on("/clear-all-users", []() {
+    if(!Hotspot_IsSessionValid()) {
+      Hotspot_RequireAuth();
+      return;
+    }
+    
+    String adminpass = webServer.arg("adminpass");
+    String storedPassword = Config_LoadPassword();
+    
+    // Verify admin password
+    if(adminpass != storedPassword) {
+      webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Invalid%20password!"), true);
+      webServer.send(302, "text/plain", "");
+      return;
+    }
+    
+    // Delete all user files
+    Config_SelectSDCard();
+    File usersDir = SD.open("/users");
+    int deletedCount = 0;
+    
+    if(usersDir && usersDir.isDirectory()) {
+      File entry = usersDir.openNextFile();
+      
+      // Collect filenames first (can't delete while iterating)
+      String filesToDelete[100];
+      int fileCount = 0;
+      
+      while(entry && fileCount < 100) {
+        if(!entry.isDirectory()) {
+          String fileName = String(entry.name());
+          int lastSlash = fileName.lastIndexOf('/');
+          if(lastSlash >= 0) {
+            fileName = fileName.substring(lastSlash + 1);
+          }
+          if(fileName != "admin" && fileName.length() > 0) {
+            filesToDelete[fileCount++] = fileName;
+          }
+        }
+        entry.close();
+        entry = usersDir.openNextFile();
+      }
+      usersDir.close();
+      
+      // Now delete all collected files
+      for(int i = 0; i < fileCount; i++) {
+        String filepath = "users/" + filesToDelete[i];
+        if(SD.remove(filepath)) {
+          deletedCount++;
+        }
+      }
+    }
+    Config_DeselectAll();
+    
+    Display_Show(String(" ") + APP_NAME, "CLEARED " + String(deletedCount) + " USERS");
+    Buzzer_Play(2, 900, 300);
+    Serial.println("Cleared all users via web: " + String(deletedCount) + " deleted");
+    Config_AddBootLog("Web: Cleared " + String(deletedCount) + " users");
+    
+    webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Cleared%20" + String(deletedCount) + "%20users!"), true);
     webServer.send(302, "text/plain", "");
   });
 

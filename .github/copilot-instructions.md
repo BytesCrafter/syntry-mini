@@ -1,7 +1,11 @@
 # Syntry Access - AI Coding Guide
 
 ## Project Overview
-Arduino-based RFID door access control system for ESP8266 with web-based management. Manages physical access via RFID cards with file-based user database on SD card. Features WiFi hotspot for configuration with captive portal web UI, EEPROM-based settings, and comprehensive user management.
+Arduino-based RFID door access control system for ESP8266 NodeMCU with web-based management. Manages physical access via RFID cards with file-based user database on SD card. Features WiFi hotspot for configuration with captive portal web UI, EEPROM-based settings, comprehensive user management, and optional WiFi client mode for network connectivity.
+
+**Current Version**: 1.4.2 (Build: 2026-01-22)  
+**Platform**: ESP8266 NodeMCU (ESP-12E Module)  
+**Serial Baud**: 9600
 
 ## Architecture & Components
 
@@ -15,7 +19,7 @@ Arduino-based RFID door access control system for ESP8266 with web-based managem
 ### Module-Based Design
 Each `.h` file is a self-contained module with init/loop functions:
 - **Config.h**: Global settings, EEPROM management (password/hostname), SPI bus arbitration, serial commands
-- **Rfid.h**: Card reading with SPI selection, UID conversion via `Helper_array_to_string()`
+- **Rfid.h**: Card reading with SPI selection, UID conversion, **self-recovery system** for power interruptions
 - **SDCard.h**: File I/O with SPI protection, user database (`users/{uid}`), settings storage
 - **Hotspot.h**: WiFi AP + captive portal (192.168.4.1), all web routes, user management
 - **Helper.h**: HTML generation (teal gradient theme), string utilities, web UI pages
@@ -36,30 +40,55 @@ Each `.h` file is a self-contained module with init/loop functions:
    SDCard_Init(&Display_Show);  // Status messages
    ```
 
-3. **Hybrid Storage Architecture**:
-   - **EEPROM** (persistent, 512 bytes):
-     - Address 0-33: Admin password (max 32 chars + length byte)
-     - Address 34-55: Device hostname (max 20 chars + length byte)
-   - **SD Card** (file-based):
-     - `users/{uid}` - Empty file = authorized user
-     - `settings/wifiname` - Saved WiFi SSID
-     - `settings/wifipass` - Saved WiFi password
+### Hybrid Storage Architecture
+**EEPROM** (persistent, 512 bytes) - Critical settings requiring reliability:
+- Address 0-33: Admin password (max 32 chars + length byte, default "admin")
+- Address 34-55: Device hostname (max 20 chars + length byte)
+- Address 56-120: WiFi SSID (max 64 chars + length byte)
+- Address 121-185: WiFi Password (max 64 chars + length byte, **optional for open networks**)
+- Address 186: WiFi Auto-Connect flag (1 byte: 0=disabled, 1=enabled)
+
+**SD Card** (file-based) - User data and logs:
+- `users/{uid}` - Empty file = authorized user (8-char hex UID as filename)
+- `settings/ipaddress` - Last connected IP address
+- Boot logs stored in memory array (MAX_BOOT_LOGS=20, displayed on `/boot-logs` route)
+
+**EEPROM API Pattern**: All Config functions follow consistent naming:
+```cpp
+Config_SavePassword(String) / Config_LoadPassword() -> String
+Config_SaveHostname(String) / Config_LoadHostname() -> String  
+Config_SaveWifiSSID(String) / Config_LoadWifiSSID() -> String
+Config_SaveWifiPassword(String) / Config_LoadWifiPassword() -> String
+Config_SaveWifiAuto(bool) / Config_LoadWifiAuto() -> bool
+```
+⚠️ **Critical**: Always call `EEPROM.commit()` after writes - changes are NOT persistent without it!
 
 ### Web Interface Architecture
 Captive portal on WiFi AP (SSID: "Syntry Access - {hostname}"):
+- **Session Management**: 
+  - URL-based token authentication (captive portal compatible, no cookies)
+  - 30-minute session timeout (SESSION_TIMEOUT constant)
+  - Pattern: `Hotspot_IsSessionValid()` checks token, `Hotspot_RequireAuth()` redirects if invalid
+  - Token generated on login: 32-char hex string (`Hotspot_GenerateSessionToken()`)
+  - All protected routes must call `Hotspot_IsSessionValid()` first, pass token via hidden form fields or URL params
+  
 - **Routes**: 
-  - Auth: `/login`, `/change-password`, `/update-password`
+  - Auth: `/login`, `/logout`, `/change-password`, `/update-password`
   - Modes: `/menu`, `/access`, `/add`, `/remove`, `/verify`
-  - Management: `/manage-users`, `/delete-user`, `/change-hostname`, `/update-hostname`
-  - Network: `/wifi-connect`, `/save-wifi`, `/system`
+  - Management: `/manage-users`, `/delete-user`, `/change-hostname`, `/update-hostname`, `/boot-logs`
+  - Network: `/wifi-connect`, `/save-wifi`, `/wifi-manual-connect`, `/wifi-disconnect`, `/wifi-toggle-auto`
+  - System: `/system` (device info, hardware status, memory stats)
+
 - **HTML Generation**: All UI in Helper.h using minified CSS (~800 chars), teal gradient theme (#1ab394)
   - Grid layout: 2x3 for mode buttons (100px height), 2x1 split for restart/logout
   - CSS classes: `.grid` (2-column), `.split` (50/50), `.c` (centered container 500px max)
   - Button colors: Purple (#8e44ad) for Manage Users, Orange (#f39c12) for System, Red (#e53e3e) for Logout
+  - Helper functions: `Helper_HttpHeader()`, `Helper_HttpFooter()`, `Helper_HttpBackToMenu()`
+
 - **Authentication**: EEPROM-based password (`Config_LoadPassword()`), defaults to "admin"
-- **Mode Timeout**: Operations (`add`/`remove`/`verify`) auto-revert to `access` after 5 minutes
+- **Mode Timeout**: Operations (`add`/`remove`/`verify`) auto-revert to `access` after 5 minutes (expireTime)
 - **User Management**: Web UI lists all registered UIDs with individual delete buttons
-- **System Info Page**: Displays device name, firmware v1.4.0 + build date, hardware status (✓/✗), flash/heap memory stats, chip ID, WiFi SSID
+- **WiFi Configuration**: Password field **optional** - supports open networks (leave blank)
 
 ## Critical Patterns & Conventions
 
@@ -86,6 +115,39 @@ RFID cards return byte arrays; convert to hex strings:
 char str[32] = "";
 Helper_array_to_string(mfrc522.uid.uidByte, 4, str);  // Outputs: "AABBCCDD"
 ```
+
+### RFID Self-Recovery System (Rfid.h v0.2.0)
+The RFID module includes comprehensive self-recovery for handling power interruptions and electrical noise:
+
+**RST Pin Configuration** (CRITICAL):
+```cpp
+#define RST_PIN UINT8_MAX  // Correct: No hardware reset pin connected
+// WRONG: #define RST_PIN 0  // This uses GPIO0 which conflicts with ESP8266 boot!
+```
+
+**Recovery Timing Constants:**
+```cpp
+RFID_HEALTH_CHECK_INTERVAL = 5000;     // Check every 5s when issues detected
+RFID_PROACTIVE_CHECK_INTERVAL = 15000; // Proactive check every 15s when OK
+RFID_MAX_FAILURES_BEFORE_RESET = 3;    // Trigger recovery after 3 failures
+```
+
+**Key Functions:**
+- `Rfid_HealthCheck()` - Verifies SPI communication (VersionReg), antenna (TxControlReg), modulation (ModWidthReg)
+- `Rfid_FullInit()` - Complete reinitialization: software reset, register config, antenna enable
+- `Rfid_Recover()` - CS pin isolation recovery (simulates power cycle since RST not connected)
+
+**Hardware Isolation Recovery Flow:**
+1. Set CS pin to INPUT (high-impedance) - electrically disconnects module
+2. Wait 100-300ms (progressive delays on retry)
+3. Restore CS pin as OUTPUT
+4. Call `Rfid_FullInit()` for complete register reinitialization
+5. Verify with `Rfid_HealthCheck()`
+
+**Critical Registers for Card Detection:**
+- `VersionReg` - 0x91/0x92 = genuine, 0x88 = FM17522 clone, 0x00/0xFF = communication failure
+- `TxControlReg` - Bits 0-1 must be 0x03 for antenna ON
+- `ModWidthReg` - Must be 0x26 (default), 0x00/0xFF = invalid
 
 ### Special Admin Reset
 Tapping the admin card (UID = hostname value from EEPROM) resets EEPROM password to "admin".
@@ -186,7 +248,10 @@ restart          - Soft restart
 - **Hotspot.h**: Complete web server with 15+ routes, user management, hostname config
 - **Helper.h**: HTML generation (teal theme), includes `Helper_Hotspot_ManageUsers()` for web-based user list
 - **SDCard.h**: Enhanced error handling, SPI protection, voltage warnings (v0.2.0)
-- **Rfid.h**: Software reset (GPIO16 freed for relay), SPI-aware initialization
+- **Rfid.h**: Card reading with SPI selection, software reset (no RST pin), **comprehensive self-recovery system**
+- **WifiClient.h**: Station mode connection with EEPROM credential loading, auto-retry logic (15 attempts)
+- **Display.h**: LCD I2C communication with callback pattern
+- **Clock.h**: RTC DS1302 support for timestamping (ThreeWire library)
 
 **Recent Fixes (Jan 2026)**:
 - Moved relay from GPIO3 (TX) to GPIO16 (D0) - eliminated UART interference
@@ -194,6 +259,13 @@ restart          - Soft restart
 - Added comprehensive SPI bus management - fixed device malfunctions
 - Implemented user management web UI - list all cards with delete buttons
 - Fixed string concatenation with `APP_NAME` constant - compilation errors resolved
+- **WiFi password now optional** - supports open networks (leave field blank)
+- **RFID Self-Recovery v0.2.0** - Complete rewrite with proper library usage:
+  - Fixed `RST_PIN` from 0 to `UINT8_MAX` (GPIO0 conflict with ESP8266 boot)
+  - `Rfid_FullInit()` - Complete register reinitialization matching library's `PCD_Init()`
+  - CS pin isolation recovery (simulates power cycle when no RST pin)
+  - Proactive health checks every 15 seconds
+  - Detailed register dump logging for debugging
 
 ## Future Enhancement Opportunities
 

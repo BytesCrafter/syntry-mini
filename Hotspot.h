@@ -272,6 +272,7 @@ void Hotspot_broadcast() {
       }
       f.close();
       Config_DeselectAll();
+      SDCard_InvalidateUserCount();  // Invalidate cache
       
       Display_Show(String(" ") + APP_NAME, "USER ADDED");
       Buzzer_Play(1, 900, 500);
@@ -339,8 +340,7 @@ void Hotspot_broadcast() {
       Config_DeselectAll();
       
       if(removed) {
-        Display_Show(String(" ") + APP_NAME, "USER DELETED");
-        Buzzer_Play(1, 900, 500);
+        SDCard_InvalidateUserCount();  // Invalidate cache
         Serial.println("User deleted via web: " + uid);
         
         webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=User%20deleted!&page=" + String(page)), true);
@@ -406,9 +406,8 @@ void Hotspot_broadcast() {
       }
     }
     Config_DeselectAll();
+    SDCard_InvalidateUserCount();  // Invalidate cache
     
-    Display_Show(String(" ") + APP_NAME, "CLEARED " + String(deletedCount) + " USERS");
-    Buzzer_Play(2, 900, 300);
     Serial.println("Cleared all users via web: " + String(deletedCount) + " deleted");
     Config_AddBootLog("Web: Cleared " + String(deletedCount) + " users");
     
@@ -428,9 +427,6 @@ void Hotspot_broadcast() {
     if(newpass == confirmpass && newpass.length() > 0) {
       // Save password to EEPROM
       if(Config_SavePassword(confirmpass)) {
-        Display_Show(String(" ") + APP_NAME, "PASSWORD UPDATED");
-        Buzzer_Play(1, 900, 1000);
-
         webServer.sendHeader("Location", Hotspot_AddToken("/change-password?status=Updated%20your%20Password!"), true);
         webServer.send(302, "text/plain", "");
         return;
@@ -452,9 +448,6 @@ void Hotspot_broadcast() {
     if(newhostname.length() > 0 && newhostname.length() <= 20) {
       // Save hostname to EEPROM
       if(Config_SaveHostname(newhostname)) {
-        Display_Show(String(" ") + APP_NAME, "HOSTNAME UPDATED");
-        Buzzer_Play(1, 900, 1000);
-
         webServer.sendHeader("Location", Hotspot_AddToken("/change-hostname?status=Updated%20hostname!%20Restart%20to%20apply."), true);
         webServer.send(302, "text/plain", "");
         return;
@@ -490,11 +483,6 @@ void Hotspot_broadcast() {
       
       if(ssidSaved) {
         Config_AddBootLog("WiFi: Credentials saved to EEPROM");
-        Display_Show(String(" ") + APP_NAME, "Saved WIFI Creds");
-        Buzzer_Play(1, 900, 500);
-
-        Display_Show(String(" ") + APP_NAME, "Wifi Connecting.");
-        Buzzer_Play(1, 900, 500);
 
         WifiClient_connect(wifiname, wifipass);
         timeClient.begin();
@@ -558,7 +546,6 @@ void Hotspot_broadcast() {
 
     if(action == "override") {
       //TODO: Save log to SDCard
-      //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
       Display_Show(String(" ") + APP_NAME, "ACCESS OVERRIDE");
       Buzzer_Play(1, 900, 50);
       Relay_Open();
@@ -640,6 +627,7 @@ void Hotspot_broadcast() {
 void Hotspot_loop() {
   dnsServer.processNextRequest();
   webServer.handleClient();
+  yield();  // Allow ESP8266 background tasks
 
   if(rfidMode != "access" && millis() - startTime > expireTime) {
     Display_Show(String(" ") + APP_NAME, " TAP YOUR CARD");

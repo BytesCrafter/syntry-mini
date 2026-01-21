@@ -56,9 +56,19 @@ void SDCard_Save(String filename, String data, bool newLine = true) {
   Config_DeselectAll();  // Deselect after operation
 }
 
+// Cached user count to reduce SD card access
+int cachedUserCount = -1;
+unsigned long lastUserCountTime = 0;
+const unsigned long USER_COUNT_CACHE_TIME = 30000; // Cache for 30 seconds
+
 int SDCard_CountUsers() {
+  // Return cached count if still valid
+  if(cachedUserCount >= 0 && (millis() - lastUserCountTime < USER_COUNT_CACHE_TIME)) {
+    return cachedUserCount;
+  }
+  
   int count = 0;
-  Config_SelectSDCard();  // Select SD Card
+  Config_SelectSDCard();
   
   File usersDir = SD.open("/users");
   if (usersDir) {
@@ -69,10 +79,21 @@ int SDCard_CountUsers() {
       }
       entry.close();
       entry = usersDir.openNextFile();
+      if(count % 20 == 0) yield();  // Prevent watchdog reset
     }
     usersDir.close();
   }
   
-  Config_DeselectAll();  // Deselect after operation
+  Config_DeselectAll();
+  
+  // Update cache
+  cachedUserCount = count;
+  lastUserCountTime = millis();
+  
   return count;
+}
+
+// Invalidate user count cache (call after add/remove user)
+void SDCard_InvalidateUserCount() {
+  cachedUserCount = -1;
 }

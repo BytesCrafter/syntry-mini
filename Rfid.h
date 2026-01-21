@@ -14,16 +14,16 @@
 #define RST_PIN UINT8_MAX
 MFRC522 mfrc522(RFID_CS_PIN, RST_PIN); // Create MFRC522 instance
 
-// Self-recovery tracking
+// Self-recovery tracking (optimized intervals for performance)
 unsigned long lastRfidHealthCheck = 0;
-const unsigned long RFID_HEALTH_CHECK_INTERVAL = 5000; // Check every 5 seconds if issues detected
-const unsigned long RFID_PROACTIVE_CHECK_INTERVAL = 15000; // Proactive check every 15 seconds even when OK
+const unsigned long RFID_HEALTH_CHECK_INTERVAL = 10000; // Check every 10 seconds if issues detected
+const unsigned long RFID_PROACTIVE_CHECK_INTERVAL = 30000; // Proactive check every 60 seconds when OK
 int consecutiveRfidFailures = 0;
 const int RFID_MAX_FAILURES_BEFORE_RESET = 3; // Reset after 3 consecutive failures
 
-// Debug: Track listen loop iterations
+// Debug: Track listen loop iterations (reduced frequency)
 unsigned long lastRfidDebugLog = 0;
-const unsigned long RFID_DEBUG_LOG_INTERVAL = 10000; // Log status every 10 seconds
+const unsigned long RFID_DEBUG_LOG_INTERVAL = 60000; // Log status every 2 minutes
 
 // Proactive recovery timer
 unsigned long lastProactiveCheck = 0;
@@ -268,79 +268,50 @@ void Rfid_Recover() {
   }
 }
 
-//Called in loop to listen for RFID cards
+//Called in loop to listen for RFID cards (OPTIMIZED)
 void Rfid_Listen(bool (*callback)(String)) {  
   // === RECOVERY MODE: If RFID is down, attempt recovery periodically ===
   if (!rfidStatus) {
     if (millis() - lastRfidHealthCheck > RFID_HEALTH_CHECK_INTERVAL) {
       lastRfidHealthCheck = millis();
-      Serial.println("[RFID Listen] RFID DOWN - Attempting recovery...");
+      Serial.println(F("[RFID] Attempting recovery..."));
       Rfid_Recover();
     }
-    callback("null");
-    return;
+    return;  // Don't call callback with "null" every loop - wastes time
   }
   
-  // === PERIODIC HEALTH CHECK: Verify module is still working ===
+  // === PERIODIC HEALTH CHECK: Less frequent to improve performance ===
   if (millis() - lastProactiveCheck > RFID_PROACTIVE_CHECK_INTERVAL) {
     lastProactiveCheck = millis();
-    
     rfidStatus = false;
     Rfid_Recover();
-    callback("null");
     return;
-  }
-  
-  // === DEBUG LOGGING: Periodic status report ===
-  if (millis() - lastRfidDebugLog > RFID_DEBUG_LOG_INTERVAL) {
-    lastRfidDebugLog = millis();
-    Config_SelectRFID();
-    byte ver = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-    byte tx = mfrc522.PCD_ReadRegister(mfrc522.TxControlReg);
-    Config_DeselectAll();
   }
   
   // === SELECT RFID MODULE ===
   Config_SelectRFID();
   
-  // === QUICK COMMUNICATION CHECK ===
-  byte testRead = mfrc522.PCD_ReadRegister(mfrc522.VersionReg);
-  if (testRead == 0x00 || testRead == 0xFF) {
-    Serial.println("[RFID Listen] SPI FAIL - Module disconnected?");
-    Config_DeselectAll();
-    rfidStatus = false;  // Mark as failed, recovery will happen next loop
-    callback("null");
-    return;
-  }
-  
-  // === ANTENNA CHECK: Quick verify and fix ===
-  byte txControl = mfrc522.PCD_ReadRegister(mfrc522.TxControlReg);
-  if ((txControl & 0x03) != 0x03) {
-    Serial.println("[RFID Listen] Antenna OFF - Reactivating...");
-    mfrc522.PCD_AntennaOn();
-    delay(5);
-  }
-  
-  // === CARD DETECTION ===
+  // === CARD DETECTION (fast path - no extra checks unless card present) ===
   if (!mfrc522.PICC_IsNewCardPresent()) {
     Config_DeselectAll();
-    callback("null");
-    return;
+    return;  // No card - exit fast
   }
 
   // === READ CARD UID ===
   if (!mfrc522.PICC_ReadCardSerial()) {
-    Serial.println("[RFID Listen] Card read failed - electrical noise?");
     Config_DeselectAll();
-    callback("null");
-    return;
+    return;  // Card read failed - exit
   }
 
-  // Convert UID bytes to hex string
+  // Card successfully read - convert UID to hex string
   char str[32] = "";
   Helper_array_to_string(mfrc522.uid.uidByte, 4, str);
   
-  Serial.println("[RFID Listen] UID: " + String(str));
+  Serial.println("[RFID] UID: " + String(str));
+  
+  // Halt card to prepare for next read
+  mfrc522.PICC_HaltA();
+  mfrc522.PCD_StopCrypto1();
 
   Config_DeselectAll();
   callback(str);

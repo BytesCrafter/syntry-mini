@@ -3,8 +3,8 @@
 String serverName = "https://system.bytescrafter.net/v1/api/users/signin";
 
 #define APP_NAME "Syntry Access"
-#define APP_VERSION "1.4.2" 
-#define BUILD_DATE "2026-01-21"
+#define APP_VERSION "1.4.4" 
+#define BUILD_DATE "2026-01-22"
 
 #define BAUD_RATE 9600 
 

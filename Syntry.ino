@@ -159,6 +159,7 @@ bool add(String uid) {
     addFile.flush();
     addFile.close();
     Config_DeselectAll();
+    SDCard_InvalidateUserCount();  // Invalidate cache
     Serial.println("User added: " + uid);
     Display_Show(String(" ") + APP_NAME, " LOG: SAVED!");
     Buzzer_Play(1, 900, 50); delay(1000);
@@ -180,6 +181,7 @@ bool remove(String uid) {
   Config_DeselectAll();
 
   if (!exists && removed) {
+    SDCard_InvalidateUserCount();  // Invalidate cache
     Serial.println("User removed: " + uid);
     Display_Show(String(" ") + APP_NAME, " LOG: DELETED!");
     Buzzer_Play(1, 900, 50); delay(1000);
@@ -334,16 +336,17 @@ void setup() {
 bool didTryConnect = false;
 
 void loop() {
-  if(!isLoaded) {
-    return ;
-  }
-  Config_Loop();
-
-  Rfid_Listen(&catch_Rfid);
-
+  if(!isLoaded) return;
+  
+  // Handle web requests first (most time-sensitive)
   Hotspot_loop();
-
-  // if (WiFi.status() == WL_CONNECTED) {
-  //   timeClient.update();
-  // }
+  
+  // Check for RFID cards
+  Rfid_Listen(&catch_Rfid);
+  
+  // Process serial commands (less frequent)
+  Config_Loop();
+  
+  // Allow ESP8266 to handle WiFi/system tasks
+  yield();
 }

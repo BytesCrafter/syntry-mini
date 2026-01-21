@@ -212,14 +212,14 @@ void Hotspot_broadcast() {
         Buzzer_Play(1, 900, 500);
         Serial.println("User deleted via web: " + uid);
         
-        webServer.sendHeader("Location", String("/manage-users?status=User%20deleted!"), true);
-        webServer.send(200, "text/plain", "");
+        webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=User%20deleted!"), true);
+        webServer.send(302, "text/plain", "");
         return;
       }
     }
 
-    webServer.sendHeader("Location", String("/manage-users?status=Failed%20to%20delete%20user!"), true);
-    webServer.send(200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/manage-users?status=Failed%20to%20delete%20user!"), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/update-password", []() {
@@ -237,14 +237,14 @@ void Hotspot_broadcast() {
         Display_Show(String(" ") + APP_NAME, "PASSWORD UPDATED");
         Buzzer_Play(1, 900, 1000);
 
-        webServer.sendHeader("Location", String("/change-password?status=Updated%20your%20Password!"), true);
-        webServer.send ( 200, "text/plain", "");
+        webServer.sendHeader("Location", Hotspot_AddToken("/change-password?status=Updated%20your%20Password!"), true);
+        webServer.send(302, "text/plain", "");
         return;
       }
     }
 
-    webServer.sendHeader("Location", String("/change-password?status=Something%20not%20right!"), true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/change-password?status=Something%20not%20right!"), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/update-hostname", []() {
@@ -261,14 +261,14 @@ void Hotspot_broadcast() {
         Display_Show(String(" ") + APP_NAME, "HOSTNAME UPDATED");
         Buzzer_Play(1, 900, 1000);
 
-        webServer.sendHeader("Location", String("/change-hostname?status=Updated%20hostname!%20Restart%20to%20apply."), true);
-        webServer.send ( 200, "text/plain", "");
+        webServer.sendHeader("Location", Hotspot_AddToken("/change-hostname?status=Updated%20hostname!%20Restart%20to%20apply."), true);
+        webServer.send(302, "text/plain", "");
         return;
       }
     }
 
-    webServer.sendHeader("Location", String("/change-hostname?status=Something%20not%20right!"), true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/change-hostname?status=Something%20not%20right!"), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/wifi-connect", []() {
@@ -289,12 +289,12 @@ void Hotspot_broadcast() {
     String wifiname = webServer.arg("wifiname");
     String wifipass = webServer.arg("wifipass");
 
-    if(wifiname != "" && wifipass != "") {
-      // Save to EEPROM
+    if(wifiname != "") {
+      // Save to EEPROM (password can be empty for open networks)
       bool ssidSaved = Config_SaveWifiSSID(wifiname);
       bool passSaved = Config_SaveWifiPassword(wifipass);
       
-      if(ssidSaved && passSaved) {
+      if(ssidSaved) {
         Config_AddBootLog("WiFi: Credentials saved to EEPROM");
         Display_Show(String(" ") + APP_NAME, "Saved WIFI Creds");
         Buzzer_Play(1, 900, 500);
@@ -305,18 +305,18 @@ void Hotspot_broadcast() {
         WifiClient_connect(wifiname, wifipass);
         timeClient.begin();
 
-        webServer.sendHeader("Location", String("/wifi-connect?status=Saved%20and%20connected!"), true);
-        webServer.send ( 200, "text/plain", "");
+        webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=Saved%20and%20connected!"), true);
+        webServer.send(302, "text/plain", "");
         return;
       } else {
-        webServer.sendHeader("Location", String("/wifi-connect?status=Credentials%20too%20long!"), true);
-        webServer.send ( 200, "text/plain", "");
+        webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=Credentials%20too%20long!"), true);
+        webServer.send(302, "text/plain", "");
         return;
       }
     }
 
-    webServer.sendHeader("Location", String("/wifi-connect?status=Missing%20credentials!"), true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=Missing%20credentials!"), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/wifi-manual-connect", []() {
@@ -325,8 +325,8 @@ void Hotspot_broadcast() {
       return;
     }
     WifiClient_connect();
-    webServer.sendHeader("Location", String("/wifi-connect?status=Connecting..."), true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=Connecting..."), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/wifi-disconnect", []() {
@@ -337,8 +337,8 @@ void Hotspot_broadcast() {
     WiFi.disconnect();
     wifiStatus = false;
     Config_AddBootLog("WiFi: Manually disconnected");
-    webServer.sendHeader("Location", String("/wifi-connect?status=Disconnected"), true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=Disconnected"), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/wifi-toggle-auto", []() {
@@ -350,8 +350,8 @@ void Hotspot_broadcast() {
     Config_SaveWifiAuto(!currentAuto);
     String status = !currentAuto ? "Auto-connect%20enabled" : "Auto-connect%20disabled";
     Config_AddBootLog("WiFi: Auto-connect " + String(!currentAuto ? "enabled" : "disabled"));
-    webServer.sendHeader("Location", String("/wifi-connect?status=") + status, true);
-    webServer.send ( 200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/wifi-connect?status=" + status), true);
+    webServer.send(302, "text/plain", "");
   });
 
   webServer.on("/access", []() {
@@ -427,8 +427,8 @@ void Hotspot_broadcast() {
     activeSessionToken = ""; // Clear session
     sessionStartTime = 0;
     webServer.sendHeader("Set-Cookie", "session=; Path=/; Max-Age=0"); // Clear cookie
-    webServer.sendHeader("Location", String("/?status=Logged%20out%20successfully!"), true);
-    webServer.send(200, "text/plain", "");
+    webServer.sendHeader("Location", Hotspot_AddToken("/?status=Logged%20out%20successfully!"), true);
+    webServer.send(302, "text/plain", "");
     Config_AddBootLog("Web: Admin logged out");
   });
 

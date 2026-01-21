@@ -137,7 +137,7 @@ bool access(String uid) {
     
     Serial.println("Access granted: " + uid);
     //TODO: Save log to SDCard
-    //SDCard_Save("logs.txt", "User and Time Here"); //sHUTDOWN
+    //SDCard_Save("logs.txt", "User and Time Here");
 
     Display_Show(String(" ") + APP_NAME, " ACCESS GRANTED");
     Buzzer_Play(1, 900, 50); 

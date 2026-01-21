@@ -343,11 +343,6 @@ void loop() {
 
   Hotspot_loop();
 
-  // if(!didTryConnect) {
-  //   //WifiClient_connect();
-  //   didTryConnect = true;
-  // }
-
   // if (WiFi.status() == WL_CONNECTED) {
   //   timeClient.update();
   // }

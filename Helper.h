@@ -230,7 +230,7 @@ String Helper_Hotspot_ConnectWifi(String message = "") {
   ptr +="<form action='/save-wifi' method='get'>";
   ptr += token;
   ptr +="<input type='text' name='wifiname' placeholder='WiFi Name' required>";
-  ptr +="<input type='password' name='wifipass' placeholder='WiFi Password' required>";
+  ptr +="<input type='password' name='wifipass' placeholder='WiFi Password (leave blank for open networks)'>";
   ptr +="<input type='submit' value='SAVE & CONNECT'></form>";
   
   ptr +=Helper_HttpBackToMenu();

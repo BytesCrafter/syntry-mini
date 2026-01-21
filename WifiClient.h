@@ -7,7 +7,7 @@
 #include <WiFiClient.h>
 
 //Connect your controller to WiFi
-void WifiClient_connect(String apName = "", String apPass = "") {
+void WifiClient_connect(String apName = "", String apPass = "null") {
 
   //Get WiFi credentials from EEPROM
   String ssid = Config_LoadWifiSSID();
@@ -17,12 +17,12 @@ void WifiClient_connect(String apName = "", String apPass = "") {
   if(ssid == "" && apName != "") {
     ssid = apName;
   }
-  if(password == "" && apPass != "") {
+  if(password == "" && apPass != "null") {
     password = apPass;
   }
   
   // If still no credentials, return
-  if(ssid == "" || password == "") {
+  if(ssid == "") {
     Config_AddBootLog("WiFi: No credentials stored");
     return;
   }

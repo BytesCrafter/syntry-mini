@@ -106,7 +106,7 @@ String Helper_Hotspot_To_Menu() {
   ptr +="<form action='/boot-logs' method='get'>" + token + "<input type='submit' value='Boot Logs' style='background:#17a2b8'></form>";
   ptr +="<form action='/wifi-connect' method='get'>" + token + "<input type='submit' value='WiFi Setup' style='background:#3498db'></form>";
   int userCount = SDCard_CountUsers();
-  ptr +="<form action='/manage-users' method='get'>" + token + "<input type='submit' value='Manage Users (" + String(userCount) + ")' style='background:#8e44ad'></form>";
+  ptr +="<form action='/manage-users' method='get'>" + token + "<input type='submit' value='Manage Users\n(" + String(userCount) + " cards)' style='background:#8e44ad;white-space:pre-wrap;line-height:1.3'></form>";
   ptr +="<form action='/system' method='get'>" + token + "<input type='submit' value='System Info' style='background:#f39c12'></form>";
   ptr +="</div>";
   ptr +="<div class='split'>";
